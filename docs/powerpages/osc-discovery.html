@@ -1,0 +1,1721 @@
+{% comment %}
+  OSC Discovery intake — Power Pages page
+  ------------------------------------------------------------------
+  LOOK comes from docs/design/intake.css in the repo design pack.
+  That CSS is inlined below VERBATIM — do not edit it here. If the design
+  changes, re-copy from docs/design/intake.css.
+
+  BEHAVIOUR (steps, conditionals, validation, submit) lives in the script
+  at the bottom. Field changes go in STEPS.
+
+  SETUP — Portal Management > Site Settings:
+    Webapi/psc_oscdiscovery/enabled      true
+    Webapi/psc_oscdiscovery/fields       *
+    Webapi/psc_oscdiscovery_sp/enabled   true
+    Webapi/psc_oscdiscovery_sp/fields    *
+
+  PERMISSIONS — web role Anonymous:
+    psc_oscdiscovery     CREATE only (never Read of OSC answers)
+    psc_oscdiscovery_sp  CREATE + Append To parent
+{% endcomment %}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ===== docs/design/intake.css — VERBATIM. Do not edit here. ===== */
+/* Scoping · OSC Discovery — portable intake chrome.
+   Drop this on Power Pages (or any host). Load Barlow + Public Sans first.
+   Do not restyle tokens to match a logo. */
+
+:root {
+  --psc-navy: #021e47;
+  --psc-navy-mid: #12366c;
+  --psc-gold: #fbbf24;
+  --psc-gold-hover: #d97706;
+  --psc-white: #ffffff;
+  --psc-ink: #021e47;
+  --psc-error: #fca5a5;
+  --psc-hairline: rgba(255, 255, 255, 0.1);
+  --psc-placeholder: #021e47;
+  --psc-display: "Barlow", system-ui, sans-serif;
+  --psc-sans: "Public Sans", system-ui, sans-serif;
+}
+
+.psc-intake,
+.psc-intake * { box-sizing: border-box; }
+
+.psc-intake {
+  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--psc-navy);
+  color: var(--psc-white);
+  font-family: var(--psc-sans);
+  font-feature-settings: "ss01" on, "kern" on;
+  -webkit-font-smoothing: antialiased;
+}
+
+.psc-intake a { color: inherit; }
+
+.psc-chrome { flex: 0 0 auto; background: var(--psc-navy); }
+.psc-chrome-row { display: flex; align-items: center; justify-content: center; padding: 1.5rem 1.5rem 1rem; }
+.psc-mark { display: inline-flex; align-items: center; background: transparent; padding: 0; }
+.psc-mark img { height: 64px; width: auto; display: block; }
+.psc-time { flex: 1 1 0; min-width: 0; margin: 0; text-align: center; font-size: 16px; font-weight: 400; color: #FFFFFF; }
+
+.psc-steps { display: flex; justify-content: center; flex-wrap: nowrap; overflow-x: auto; gap: 0.5rem; margin: 0; padding: 0.5rem 1rem; list-style: none; }
+.psc-step { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 0.375rem; min-height: 38px; padding: 0 12px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: var(--psc-white); font-family: inherit; font-size: 15px; font-weight: 500; white-space: nowrap; cursor: default; }
+.psc-step[aria-current="step"] { background: var(--psc-gold); border-color: var(--psc-gold); color: var(--psc-navy); font-weight: 500; }
+.psc-step.is-done { font-weight: 500; cursor: pointer; }
+
+.psc-eyebrow { max-width: 40rem; margin: 0 auto; padding: 0.5rem 1.25rem 0; font-size: 0.875rem; color: var(--psc-white); }
+.psc-title { max-width: 40rem; margin: 0.375rem auto 0; padding: 0 1.25rem; font-family: var(--psc-display); font-size: 1.5rem; font-weight: 600; line-height: 1.2; color: var(--psc-white); }
+.psc-blurb { max-width: 40rem; margin: 0.375rem auto 0; padding: 0 1.25rem 0.5rem; font-size: 1rem; line-height: 1.55; color: var(--psc-white); }
+
+.psc-well { flex: 1 1 auto; min-height: 0; overflow-y: auto; background: var(--psc-navy); }
+.psc-well-inner { width: 100%; max-width: 40rem; margin: 0 auto; padding: 1.25rem; }
+.psc-well-inner > * + * { margin-top: 1.5rem; }
+
+.psc-label { display: flex; align-items: center; flex-wrap: wrap; gap: 0.375rem; margin: 0 0 0.375rem; font-size: 1rem; font-weight: 500; color: var(--psc-white); }
+.psc-hint { margin: 0 0 0.375rem; font-size: 13px; line-height: 1.5; color: var(--psc-white); }
+.psc-error { margin: 0.25rem 0 0; font-size: 0.75rem; color: var(--psc-error); }
+
+.psc-input,
+.psc-select,
+.psc-textarea { display: block; width: 100%; height: 2.75rem; padding: 0 0.75rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; background: var(--psc-white); color: var(--psc-ink); font-family: inherit; font-size: 1rem; }
+.psc-textarea { height: auto; min-height: 7rem; padding: 0.625rem 0.75rem; resize: vertical; }
+.psc-input::placeholder,
+.psc-textarea::placeholder { color: var(--psc-placeholder); }
+
+.psc-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.psc-pill { min-height: 2.75rem; padding: 0.5rem 0.875rem; line-height: 1.35; white-space: normal; text-align: left; border: 1px solid var(--psc-white); border-radius: 999px; background: transparent; color: var(--psc-white); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer; }
+/* pills no longer stretch to fill the row */
+.psc-pill[aria-pressed="true"],
+.psc-pill.is-on { background: var(--psc-gold); border-color: var(--psc-gold); color: var(--psc-navy); }
+
+.psc-stack { overflow: hidden; border: 1px solid #e5e7eb; border-radius: 0.5rem; background: var(--psc-white); color: var(--psc-ink); }
+.psc-stack-row { display: flex; align-items: center; gap: 0.625rem; min-height: 2.5rem; padding: 0 0.75rem; border-bottom: 1px solid #e5e7eb; font-size: 15px; cursor: pointer; }
+.psc-stack-row.is-on { background: var(--psc-gold); color: var(--psc-navy); }
+
+.psc-reveal[hidden],
+.psc-reveal.is-closed { display: block; visibility: hidden; pointer-events: none; }
+
+.psc-footer { flex: 0 0 auto; z-index: 20; border-top: 1px solid var(--psc-hairline); background: var(--psc-navy); }
+.psc-footer-row { max-width: 40rem; margin: 0 auto; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; }
+.psc-disclaimer { max-width: 40rem; margin: 0 auto; padding: 0 1.25rem 0.75rem; font-size: 11px; color: rgba(255, 255, 255, 0.9); }
+
+.psc-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-width: 9.5rem; height: 3rem; padding: 0 1.5rem; border: 0; border-radius: 0.375rem; background: var(--psc-gold); color: var(--psc-navy); font-family: inherit; font-size: 1rem; font-weight: 600; cursor: pointer; }
+.psc-btn:hover { background: var(--psc-gold-hover); color: var(--psc-white); }
+.psc-btn-ghost { min-width: 0; height: 2.5rem; background: transparent; color: var(--psc-white); font-weight: 500; }
+
+.psc-intro { max-width: 56rem; margin: 0 auto; padding: 2.5rem 1.25rem; text-align: center; }
+.psc-intro-kicker { margin: 0; font-size: 0.875rem; color: var(--psc-white); }
+.psc-intro h1 { margin: 0; font-family: var(--psc-display); font-size: clamp(2.75rem, 6vw, 3.75rem); font-weight: 600; line-height: 1.1; color: var(--psc-white); text-align: center; }
+.psc-welcome-lead { margin: 2.5rem 0 0; font-size: 1.5rem; line-height: 1.55; color: var(--psc-white); text-align: center; }
+.psc-welcome-cards { list-style: none; margin: 2.5rem 0 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 1rem; }
+@media (min-width: 768px) {
+  .psc-welcome-cards { grid-template-columns: repeat(3, 1fr); }
+}
+.psc-welcome-cards li { background: #12366C; border: 1px solid rgba(251, 191, 36, 0.45); border-radius: 0.5rem; padding: 1.25rem; text-align: left; }
+.psc-welcome-cards .t { margin: 0; font-size: 18px; font-weight: 500; color: #fff; }
+.psc-welcome-cards .b { margin: 0.5rem 0 0; font-size: 16px; line-height: 1.5; color: #fff; }
+.psc-intro-warn { margin-top: 1.5rem !important; font-weight: 600; color: var(--psc-gold) !important; }
+.psc-intro-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 1rem; margin-top: 2.5rem; }
+.psc-intro-actions .psc-btn { height: 3.5rem; }
+
+.psc-intake input[type="text"],
+.psc-intake input[type="email"],
+.psc-intake input[type="tel"],
+.psc-intake textarea,
+.psc-intake select {
+  height: 2.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background: var(--psc-white);
+  color: var(--psc-ink);
+  font-size: 1rem;
+}
+
+/* ===== end design pack ===== */
+
+/* Power Pages page chrome fights full-bleed. Only overrides, no restyling. */
+.psc-intake { position: fixed; inset: 0; z-index: 9999;
+  background-color: #021e47;
+  background-attachment: fixed;
+  background-image:
+    linear-gradient(rgba(18, 54, 108, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(18, 54, 108, 0.22) 1px, transparent 1px);
+  background-size: 40px 40px, 40px 40px; }
+/* the wash lives on the shell; inner surfaces stay transparent */
+.psc-intake .psc-chrome, .psc-intake .psc-well, .psc-intake .psc-footer { background: transparent; }
+.psc-intake .psc-group { max-width: 40rem; margin: 2rem auto 0.9rem; padding: 0 0;
+  font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase;
+  font-weight: 600; color: var(--psc-white); }
+.psc-intake .psc-consent { display: flex; gap: 0.7rem; align-items: flex-start;
+  margin-bottom: 1rem; cursor: pointer; }
+.psc-intake .psc-consent .tick { flex: 0 0 auto; width: 1rem; font-weight: 700;
+  color: rgba(255,255,255,0.45); }
+.psc-intake .psc-consent.is-on .tick { color: var(--psc-gold); }
+.psc-intake .psc-consent input { display: none; }
+.psc-intake .psc-cui-banner { width: 100%; min-height: 60px; height: 60px; display: flex;
+  align-items: center; justify-content: center;
+  background: #12366C; }
+.psc-intake .psc-cui-banner p { width: 100%; margin: 0; padding: 0 1rem;
+  text-align: center; line-height: 1.15; }
+.psc-intake .psc-cui-banner .lead { display: block; font-weight: 700; letter-spacing: 0.025em;
+  color: #FBBF24; font-size: 17px; }
+.psc-intake .psc-cui-banner .rest { display: block; margin-top: 2px; font-weight: 500;
+  color: #FFFFFF; font-size: 17px; }
+.psc-intake .psc-mark img { height: 64px; width: auto; display: block; }
+.psc-intake .psc-wordmark { font-family: var(--psc-display); font-weight: 700;
+  font-size: 1.6rem; letter-spacing: -0.01em; color: var(--psc-white); }
+.psc-intake .psc-recap { display: grid; gap: 0.75rem; margin: 0; }
+.psc-intake .psc-recap-jump { background: none; border: 0; padding: 0; font: inherit;
+  color: inherit; text-align: left; text-decoration: underline; text-underline-offset: 2px;
+  cursor: pointer; }
+.psc-intake .psc-recap > div { display: flex; gap: 1rem; align-items: baseline;
+  border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 0.6rem; }
+.psc-intake .psc-recap dt { flex: 0 0 9rem; font-size: 0.8rem; letter-spacing: 0.08em;
+  text-transform: uppercase; color: rgba(255,255,255,0.72); }
+.psc-intake .psc-recap dd { margin: 0; font-size: 1rem; color: var(--psc-white); }
+.psc-intake .psc-gapnote { border: 1px solid rgba(251,191,36,0.45); border-radius: 0.5rem;
+  background: #12366C; padding: 0.85rem 1rem; margin-bottom: 1.5rem; }
+.psc-intake .psc-gapnote .t { margin: 0; font-weight: 500; color: #fff; font-size: 0.95rem; }
+.psc-intake .psc-gapnote .n { margin: 0.25rem 0 0; color: var(--psc-gold); font-size: 0.9rem; }
+.psc-intake .psc-gapnote .m { margin: 0.35rem 0 0; color: #fff; font-size: 0.85rem; }
+.psc-intake .psc-step:focus-visible { outline: 2px solid var(--psc-gold); outline-offset: 2px; }
+.psc-intake .psc-intro .lead { font-size: 1.5rem; margin-top: 2.5rem; }
+.psc-intake .psc-cards { display: grid; grid-template-columns: 1fr; gap: 1rem;
+  margin: 2.5rem 0 0; padding: 0; list-style: none; }
+@media (min-width: 768px) { .psc-intake .psc-cards { grid-template-columns: repeat(3, 1fr); } }
+.psc-intake .psc-cards li { border-radius: 0.5rem; padding: 1.25rem;
+  background: #12366C; border: 1px solid rgba(251, 191, 36, 0.45); }
+.psc-intake .psc-cards .t { margin: 0; font-size: 18px; font-weight: 500; color: #fff; line-height: 1.35; }
+.psc-intake .psc-cards .b { margin: 0.5rem 0 0; font-size: 16px; line-height: 1.6; color: #fff; }
+.psc-intake .psc-sps { display: grid; gap: 1rem; }
+.psc-intake .psc-sp { border: 1px solid rgba(255,255,255,0.22); border-radius: 0.5rem; padding: 1rem; }
+.psc-intake .psc-sp-head { display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 0.75rem; font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: rgba(255,255,255,0.75); }
+.psc-intake .psc-sp-del { background: none; border: 0; color: var(--psc-gold);
+  font: inherit; font-size: 0.8rem; cursor: pointer; text-transform: none; letter-spacing: 0; }
+.psc-intake .psc-sp-f + .psc-sp-f { margin-top: 1rem; }
+.psc-intake .psc-sp-add { background: transparent; border: 1px dashed rgba(255,255,255,0.5);
+  color: #fff; font: inherit; padding: 0.7rem 1rem; border-radius: 0.5rem; cursor: pointer; }
+.psc-intake .psc-sp-add:hover { border-color: var(--psc-gold); color: var(--psc-gold); }
+.psc-intake .psc-remaining { flex: 1 1 0; min-width: 0; margin: 0; text-align: center;
+  font-size: 16px; font-weight: 400; color: #FFFFFF; }
+.psc-intake .psc-gapdot { display: inline-block; width: 6px; height: 6px;
+  border-radius: 999px; background: #fff; flex: 0 0 auto; }
+.psc-intake .psc-progress { height: 4px; background: rgba(255,255,255,0.14); }
+.psc-intake .psc-progress i { display: block; height: 100%; width: 0;
+  background: var(--psc-gold); transition: width .3s ease; }
+.psc-intake .psc-tip { display: inline-flex; align-items: center; justify-content: center;
+  width: 0.95rem; height: 0.95rem; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.5); font-size: 0.6rem; cursor: help; }
+/* Once started, every rail step is a jump target — not only completed ones. */
+.psc-intake .psc-step { cursor: pointer; }
+.psc-intake .psc-chrome-row { justify-content: center; padding: 1.5rem 1.5rem 1rem; }
+.psc-intake .psc-welcome-cards li { padding: 1.75rem 1.5rem; min-height: 10.5rem; }
+.psc-intake .psc-gapfoot { max-width: 40rem; margin: 0 auto 0.5rem; }
+.psc-intake .psc-gapfoot:empty { display: none; }
+/* Solid panel so the page wash never shows through the text. */
+.psc-intake .psc-gapfoot > * { max-width: none; }
+.psc-intake .psc-gapfoot .t,
+.psc-intake .psc-gapfoot .n,
+.psc-intake .psc-gapfoot .m { background: #12366C; }
+.psc-intake .psc-gapfoot .t { margin: 0; padding: 0.5rem 0.85rem 0.15rem;
+  border-left: 3px solid var(--psc-gold); border-radius: 4px 4px 0 0;
+  font-weight: 600; font-size: 0.85rem; line-height: 1.35; color: #fff; }
+.psc-intake .psc-gapfoot .n { margin: 0; padding: 0 0.85rem 0.15rem;
+  border-left: 3px solid var(--psc-gold);
+  color: var(--psc-gold); font-size: 0.8rem; line-height: 1.35; font-weight: 500; }
+.psc-intake .psc-gapfoot .m { margin: 0; padding: 0 0.85rem 0.15rem;
+  border-left: 3px solid var(--psc-gold);
+  color: rgba(255,255,255,0.9); font-size: 0.78rem; line-height: 1.35; }
+.psc-intake .psc-gapfoot .m:last-child { padding-bottom: 0.5rem; border-radius: 0 0 4px 4px; }
+.psc-intake .psc-footer-return { max-width: 40rem; margin: 0 auto; padding: 0 1.25rem 0.5rem; }
+.psc-intake .psc-footer-return:empty { display: none; padding: 0; }
+.psc-intake .psc-backreview { display: inline-block; margin-top: 0.35rem; padding: 0;
+  border: 0; background: none; color: #fff; font: inherit; font-size: 16px;
+  text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+/* In-page submit success — stay on this page. /thank-you is not a Pages route.
+   Dedicated success view. Do not reuse the welcome home. Hide #pscIntro,
+   Start, form, footer, CUI banner, gold progress, and the 8-step rail so
+   they do not fight the post-submit workflow. Logo stays centered. */
+.psc-intake.is-done .psc-progress,
+.psc-intake.is-done .psc-cui-banner,
+.psc-intake.is-done #pscForm,
+.psc-intake.is-done #pscFooter,
+.psc-intake.is-done #pscIntro,
+.psc-intake.is-done .psc-steps,
+.psc-intake.is-done .psc-intro-actions,
+.psc-intake.is-done #pscStart { display: none !important; }
+.psc-intake.is-done #pscDone { display: block; text-align: center; }
+.psc-intake .psc-done { max-width: 56rem; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; text-align: center; }
+.psc-intake .psc-done h1 { margin: 0; font-family: var(--psc-display); font-size: clamp(2.25rem, 5vw, 3.25rem); font-weight: 600; line-height: 1.15; color: #fff; }
+.psc-intake .psc-done-lead { margin: 1rem 0 0; font-size: 1.5rem; line-height: 1.45; color: #fff; }
+.psc-intake .psc-done-flow { list-style: none; margin: 2.75rem auto 0; padding: 0; display: flex; flex-direction: column; gap: 0; max-width: 22rem; text-align: left; }
+.psc-intake .psc-done-flow li { position: relative; display: grid; grid-template-columns: 2.5rem 1fr; column-gap: 0.85rem; padding: 0 0 1.5rem; }
+.psc-intake .psc-done-flow li:last-child { padding-bottom: 0; }
+.psc-intake .psc-done-flow li:not(:last-child)::before { content: ""; position: absolute; left: 1.2rem; top: 2.55rem; bottom: 0; width: 1px; background: rgba(255,255,255,0.22); }
+.psc-intake .psc-done-dot { width: 2.5rem; height: 2.5rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem; font-weight: 600; background: #12366C; border: 1px solid rgba(251,191,36,0.45); color: #fff; }
+.psc-intake .psc-done-flow li.is-here .psc-done-dot { background: #FBBF24; border-color: #FBBF24; color: #021E47; }
+.psc-intake .psc-done-step { margin: 0; padding-top: 0.4rem; font-size: 1rem; font-weight: 500; line-height: 1.4; color: #fff; }
+.psc-intake .psc-done-here { margin: 0.2rem 0 0; font-size: 0.85rem; font-weight: 600; color: #FBBF24; }
+.psc-intake .psc-done-note { margin: 2.25rem 0 0; font-size: 1rem; line-height: 1.5; color: #fff; }
+.psc-intake .psc-done-contact { margin: 0.75rem 0 0; font-size: 1rem; line-height: 1.5; color: #fff; }
+.psc-intake .psc-done-contact a { color: #FBBF24; text-decoration: underline; text-underline-offset: 2px; }
+.psc-intake .psc-done-box svg { display: block; width: 1.15rem; height: 1.15rem; }
+@media (min-width: 768px) {
+  .psc-intake .psc-done-flow { flex-direction: row; max-width: 52rem; text-align: center; }
+  .psc-intake .psc-done-flow li { display: flex; flex-direction: column; align-items: center; flex: 1 1 0; min-width: 0; padding: 0 0.5rem; }
+  .psc-intake .psc-done-flow li:not(:last-child)::before { left: calc(50% + 1.35rem); right: calc(-50% + 1.35rem); top: 1.25rem; bottom: auto; width: auto; height: 1px; }
+  .psc-intake .psc-done-step { padding-top: 0; margin-top: 0.85rem; }
+}
+</style>
+
+<div class="psc-intake">
+  <div class="psc-chrome">
+    <div class="psc-chrome-row">
+      <span class="psc-mark" id="pscMark"></span>
+    </div>
+    <ol class="psc-steps" id="pscSteps"></ol>
+    <div class="psc-progress"><i id="pscFill"></i></div>
+    <aside class="psc-cui-banner" role="note" aria-label="Do not include CUI" id="pscBanner">
+      <p><span class="lead">DO NOT INCLUDE CUI.</span>
+         <span class="rest">High-level only. No server names, machine names, file paths, or IPs.</span></p>
+    </aside>
+  </div>
+
+  <div class="psc-well">
+    <div class="psc-done" id="pscDone" style="display:none" hidden role="status" aria-live="polite">
+      <h1>Thank you.</h1>
+      <p class="psc-done-lead">We received your submission.</p>
+      <ol class="psc-done-flow" aria-label="What happens next">
+        <li class="is-here" aria-current="step">
+          <span class="psc-done-dot">1</span>
+          <p class="psc-done-step">Submission received</p>
+          <p class="psc-done-here">You are here</p>
+        </li>
+        <li>
+          <span class="psc-done-dot psc-done-box" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.2l1.8 1.8H18.5A2.5 2.5 0 0 1 21 9.3v8.2A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5v-10z"/>
+            </svg>
+          </span>
+          <p class="psc-done-step">Box link — upload evidence</p>
+        </li>
+        <li>
+          <span class="psc-done-dot">3</span>
+          <p class="psc-done-step">Mock or certification assessment scheduled</p>
+        </li>
+        <li>
+          <span class="psc-done-dot">4</span>
+          <p class="psc-done-step">Evidence uploaded ~2 weeks before the assessment</p>
+        </li>
+      </ol>
+      <p class="psc-done-note">We notify the assessment team when you submit.</p>
+      <p class="psc-done-contact">If you have questions, email <a id="pscContact" href="mailto:assessors@example.com">assessors@example.com</a>.</p>
+    </div>
+    <div class="psc-intro" id="pscIntro">
+      <h1>Map the CUI boundary before the assessment.</h1>
+      <p class="psc-welcome-lead">This questionnaire describes the environment that will be assessed. Complete it to get the process started.</p>
+      <ul class="psc-welcome-cards">
+        <li>
+          <p class="t">Scope, not a score</p>
+          <p class="b">No SPRS, no MET / NOT MET. Just how CUI moves through your environment.</p>
+        </li>
+        <li>
+          <p class="t">High-level only</p>
+          <p class="b">No CUI in the answers. No hostnames, file paths, or machine names.</p>
+        </li>
+        <li>
+          <p class="t">Gets the process started</p>
+          <p class="b">Leave and come back. Your answers kick off the engagement with the shape of the enclave already clear.</p>
+        </li>
+      </ul>
+      <div class="psc-intro-actions">
+        <button type="button" class="psc-btn" id="pscStart">Start</button>
+      </div>
+    </div>
+
+    <div id="pscForm" style="display:none">
+      <h2 class="psc-title" id="pscTitle"></h2>
+      <p class="psc-blurb" id="pscBlurb"></p>
+      <div class="psc-well-inner" id="pscFields"></div>
+    </div>
+  </div>
+
+  <div class="psc-footer" id="pscFooter" style="display:none">
+    <div class="psc-gapfoot" id="pscGap"></div>
+    <div class="psc-footer-return" id="pscReturnReview"></div>
+    <div class="psc-footer-row">
+      <button type="button" class="psc-btn psc-btn-ghost" id="pscBack">&#8592; Back</button>
+      <p class="psc-time" id="pscTime"></p>
+      <button type="button" class="psc-btn" id="pscNext">Next</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* =====================================================================
+     BRAND — the only thing that changes between clients.
+     Mirrors org-logos/<id>/brand.json in the repo (brands/ is the fallback).
+
+     To switch vendor:
+       1. Upload their logo under web-files (Portal Management > Web Files,
+          or the web-files folder in the Power Pages VS Code editor).
+       2. Set logo to its partial URL, e.g. "/acme-logo.png".
+       3. Set name.
+
+     Leave logo as "" to fall back to a plain wordmark. A logo that 404s
+     falls back the same way — it never renders a broken image.
+     ===================================================================== */
+  var BRAND = {
+    name: "Scoping",
+    logo: "",
+    contactEmail: "assessors@example.com"
+  };
+
+  var YESNODK  = ["Yes","No","Don't know"];
+  var YESNONA  = ["Yes","No","N/A","Don't know"];
+  var YESNOPAR = ["Yes","Partial / in progress","No"];
+  var CISA = ["Defense Industrial Base","Critical Manufacturing","Information Technology",
+    "Cloud Service Provider","Chemical","Commercial Facilities","Communications","Dams",
+    "Emergency Services","Energy","Financial Services","Food and Agriculture",
+    "Government Facilities","Healthcare and Public Health",
+    "Nuclear Reactors, Materials, and Waste","Transportation Systems",
+    "Water and Wastewater Systems","Other"];
+  var SP_CMMC = ["Not assessed","Seeking L2","L2 Self","L2 C3PAO","Unknown","N/A"];
+
+  var CUILOC = ["M365 GCC High","M365 GCC","M365 Commercial","PreVeil","Azure Government",
+    "AWS GovCloud","On-prem file shares / servers","Email (non-PreVeil)","Other","N/A / not sure"];
+  var PROVIDER_JOBS = ["MSP","SOC or MDR","CSP","Other"];
+  var CUI_VS_SPD  = ["Stores, processes, or transmits CUI","Security-protection data only","Don't know"];
+  var PROVIDER_FEDRAMP = ["FedRAMP Authorized","DoD-recognized equivalent with body of evidence",
+    "SPD only","Not authorized","Don't know"];
+  var YESNONA_ONLY = ["Yes","No","N/A"];
+  var BACKUP_CLASSES = ["GCC High","Commercial cloud","On-prem","Vendor","Don't know","N/A"];
+  var FEDRAMP = ["FedRAMP Authorized","DoD equivalent + BoE","SPD only","Not authorized","Don't know","N/A"];
+
+  // t: text | email | tel | area | select | pills | multi | check
+  // req: true = always required. showIf: function(a) -> bool (also gates requirement)
+  var STEPS = [
+    { id:"P1", nav:"Company", title:"Company information",
+      blurb:"Legal entity, address, UEI, CAGE, sector, and city/state. We do not ask for a CMMC UID.",
+      fields:[
+        {g:"Who you are",k:"psc_hqname",t:"text",l:"HQ organization name",req:1},
+        {k:"psc_uei",t:"text",l:"UEI",req:1,h:"Unique Entity ID. Not a CMMC UID — do not enter a CUID."},
+        {k:"psc_oscname",t:"text",l:"OSC name",req:1,h:"The organization seeking certification."},
+        {k:"psc_dba",t:"text",l:"DBA",h:"Optional. Doing business as, if different."},
+        {g:"Address",k:"psc_address1",t:"text",l:"Address line 1",req:1},
+        {k:"psc_address2",t:"text",l:"Address line 2"},
+        {k:"psc_city",t:"text",l:"City",req:1},
+        {k:"psc_state",t:"text",l:"State",req:1},
+        {k:"psc_zip",t:"text",l:"ZIP"},
+        {k:"psc_country",t:"text",l:"Country",req:1,d:"United States"},
+        {k:"psc_businessphone",t:"tel",l:"Business phone"},
+        {k:"psc_website",t:"text",l:"Website"},
+        {g:"Sector and CUI users",k:"psc_sector",t:"pills",l:"Sector (CISA)",req:1,o:CISA,
+         h:"eMASS accepts more than one, separated by semicolons. This form sends the one you pick."},
+        {k:"psc_sectorother",t:"text",l:"Other sector",
+         showIf:function(a){return a.psc_sector==="Other";}},
+        {k:"psc_cui_users",t:"text",l:"How many users will access CUI?",req:1,h:"People who will store, process, or transmit CUI. An estimate is fine."},
+        {g:"Identifiers",k:"psc_hlocage",t:"text",l:"Highest Level Owner (HLO) CAGE",req:1,h:"The parent at the top of the corporate tree. Not a CMMC UID."},
+        {k:"psc_cageinscope",t:"text",l:"CAGE code(s) in scope",req:1,h:"Semicolons if more than one. This is not a CMMC UID."},
+        {g:"What's in scope",k:"psc_scopemode",t:"pills",l:"Scope",req:1,o:["Enterprise","Enclave"],
+         h:"Enterprise = the whole organization. Enclave = a bounded slice carved out from the rest."},
+        {k:"psc_scopedesc",t:"area",l:"Scope description",req:1,h:"What is in the enclave vs out. No CUI content.",
+         showIf:function(a){return a.psc_scopemode==="Enclave";}}
+      ]},
+    { id:"P2", nav:"Officials", title:"Assessment Official and Technical POC",
+      blurb:"The Assessment Official has signature authority. The Technical POC knows the environment. We send a copy of these answers to the Official.",
+      fields:[
+        {g:"Assessment Official",k:"psc_ao_last",t:"text",l:"Assessment Official last name",req:1},
+        {k:"psc_ao_first",t:"text",l:"Assessment Official first name",req:1},
+        {k:"psc_ao_title",t:"text",l:"Assessment Official title",req:1},
+        {k:"psc_ao_email",t:"email",l:"Assessment Official email",req:1,h:"We email a copy of your answers here."},
+        /* rendered as type=text inputmode=email — native type=email 400s +tags / odd TLDs */
+        {k:"psc_ao_phone",t:"tel",l:"Assessment Official phone",req:1},
+        {g:"Technical POC",k:"psc_tpoc_last",t:"text",l:"Technical POC last name",req:1},
+        {k:"psc_tpoc_first",t:"text",l:"Technical POC first name",req:1},
+        {k:"psc_tpoc_title",t:"text",l:"Technical POC title",req:1},
+        {k:"psc_tpoc_email",t:"email",l:"Technical POC email",req:1},
+        {k:"psc_tpoc_phone",t:"tel",l:"Technical POC phone",req:1}
+      ]},
+    { id:"P3", nav:"Providers", title:"Service providers",
+      blurb:"Who touches the CUI path, and whether they are FedRAMP-covered or need their own CMMC status. High-level names only. No CUI.",
+      fields:[
+        {k:"psc_has_sps",t:"pills",l:"Any service providers in this environment?",req:1,o:YESNONA},
+        {k:"__providers__",t:"providers",l:"Service providers",
+         showIf:function(a){return a.psc_has_sps==="Yes";}}
+      ]},
+    { id:"E1", nav:"Interview roles", title:"Interview roles",
+      blurb:"Whether interview roles can be named. No people names, hostnames, or serial numbers.",
+      fields:[
+        {g:"People",k:"psc_interview_roles_namable",t:"pills",l:"Can you name the roles we should interview?",req:1,o:YESNODK,
+         h:"Yes or no is enough. Titles are optional. Not people names."},
+        {k:"psc_interview_role_names",t:"text",l:"Interview titles (optional)",h:"Titles only. Not people names.",
+         showIf:function(a){return a.psc_interview_roles_namable==="Yes";}}
+      ]},
+    { id:"E2", nav:"CUI path", title:"How CUI moves",
+      blurb:"Where CUI is stored and how it enters and leaves, including paper, printers, USB, and home use. Do not paste CUI into this form.",
+      fields:[
+        {k:"psc_cui_locations",t:"multi",l:"Where CUI lives today",req:1,o:CUILOC,excl:["N/A / not sure"]},
+        {k:"psc_cui_locations_note",t:"text",l:"Other location",req:1,showIf:function(a){return has(a.psc_cui_locations,"Other");}},
+        {k:"psc_fedramp_m365gcchigh",t:"pills",l:"M365 GCC High — authorization",req:1,o:FEDRAMP,showIf:function(a){return has(a.psc_cui_locations,"M365 GCC High");}},
+        {k:"psc_fedramp_m365gcc",t:"pills",l:"M365 GCC — authorization",req:1,o:FEDRAMP,showIf:function(a){return has(a.psc_cui_locations,"M365 GCC");}},
+        {k:"psc_fedramp_m365commercial",t:"pills",l:"M365 Commercial — authorization",req:1,o:FEDRAMP,showIf:function(a){return has(a.psc_cui_locations,"M365 Commercial");}},
+        {k:"psc_fedramp_preveil",t:"pills",l:"PreVeil — authorization",req:1,o:FEDRAMP,showIf:function(a){return has(a.psc_cui_locations,"PreVeil");}},
+        {k:"psc_fedramp_azuregov",t:"pills",l:"Azure Government — authorization",req:1,o:FEDRAMP,showIf:function(a){return has(a.psc_cui_locations,"Azure Government");}},
+        {k:"psc_fedramp_awsgov",t:"pills",l:"AWS GovCloud — authorization",req:1,o:FEDRAMP,showIf:function(a){return has(a.psc_cui_locations,"AWS GovCloud");}},
+        {k:"psc_fedramp_onprem",t:"pills",l:"On-prem — N/A if no CSP",req:1,o:FEDRAMP,showIf:function(a){return has(a.psc_cui_locations,"On-prem file shares / servers");}},
+        {k:"psc_fedramp_email",t:"pills",l:"Email (non-PreVeil) — authorization",req:1,o:FEDRAMP,showIf:function(a){return has(a.psc_cui_locations,"Email (non-PreVeil)");}},
+        {k:"psc_fedramp_other",t:"pills",l:"Other — authorization",req:1,o:FEDRAMP,showIf:function(a){return has(a.psc_cui_locations,"Other");}},
+        {k:"psc_cui_leaves_portable",t:"pills",l:"Does CUI leave as paper, printer, or USB, including at home?",req:1,o:YESNODK,
+         h:"A fact about the environment. Yes does not fail this intake."},
+        {k:"psc_vdi_download_print",t:"pills",l:"If people use VDI or a remote desktop, can they download or print?",req:1,o:YESNONA,
+         h:"A fact about the environment. Yes does not fail this intake."},
+        {k:"psc_cui_off_hq",t:"pills",l:"Is CUI handled at sites other than HQ (other sites or home)?",req:1,o:YESNODK},
+        {k:"psc_cui_off_hq_note",t:"text",l:"Sites besides HQ",req:1,h:"City or site name only. No street addresses of CUI lockups, no CUI.",
+         showIf:function(a){return a.psc_cui_off_hq==="Yes";}},
+        {k:"psc_cui_backup_commercial",t:"pills",l:"Do backups of CUI sit in a commercial (non-gov) location?",req:1,o:YESNONA},
+        {k:"psc_cui_backup_where",t:"pills",l:"Where do CUI backups live?",req:1,o:BACKUP_CLASSES,
+         h:"Product class only: GCC High, commercial cloud, on-prem, vendor. No hostnames."},
+        {k:"psc_physical_cui_observe",t:"pills",l:"Is there physical CUI we would need to observe (paper, media, server room, badges)?",req:1,o:YESNODK,
+         h:"This decides hybrid vs virtual. You do not pick virtual."},
+        {k:"psc_virtual_tour_exposes_cui",t:"pills",l:"Would a site walkthrough put CUI on screen or in the room?",req:1,o:YESNODK},
+        {k:"psc_dlp_blocks_screenshare",t:"pills",l:"Can we screenshare live configs without CUI appearing?",req:1,o:YESNONA},
+        {k:"psc_env_mode",t:"pills",l:"What is the CUI environment?",req:1,
+         o:["GCC High tenant","PreVeil","Other named enclave","Broader environment","N/A"]},
+        {k:"psc_enclave_what",t:"text",l:"Named enclave",req:1,showIf:function(a){return a.psc_env_mode==="Other named enclave";}},
+        {k:"psc_boundary_defined",t:"pills",l:"CUI boundary defined?",req:1,o:YESNODK},
+        {k:"psc_network_diagram",t:"pills",l:"Network diagram exists?",req:1,o:YESNODK},
+        {k:"psc_diagram_vs_matrix",t:"pills",l:"Diagram walked against the applicability matrix?",req:1,o:YESNODK},
+        {k:"psc_separation",t:"pills",l:"Separation",req:1,o:["Logical","Physical","Both","Neither / unclear","N/A"]}
+      ]},
+    { id:"E3", nav:"Assets", title:"Asset categories",
+      blurb:"CRMA accident and out-of-scope reach — facts, not intake fails.",
+      fields:[
+        {k:"psc_has_crma",t:"pills",l:"Do you have systems that could touch CUI but you keep off CUI by policy or technical control (CRMA)?",req:1,o:YESNODK,
+         h:"Contractor Risk Managed Assets. Not a list of hostnames."},
+        {k:"psc_crma_handles_cui",t:"pills",l:"Can any of them still store, process, or transmit CUI even by accident (email, OneDrive, print, USB, screen share)?",req:1,o:YESNODK,
+         h:"If yes, that asset is a CUI Asset, not CRMA. This is a fact, not an intake fail.",
+         showIf:function(a){return a.psc_has_crma==="Yes";}},
+        {k:"psc_oos_can_reach_cui",t:"pills",l:"Can an out-of-scope asset still reach a CUI system (same login, print queue, file share, backup, thumb drive)?",req:1,o:YESNONA,
+         h:"If yes, it is not out of scope. This is a fact, not an intake fail."}
+      ]},
+    { id:"E4", nav:"Monitoring", title:"Monitoring and access",
+      blurb:"MFA coverage, then SSP, POA&M, and what you plan during the assessment window.",
+      fields:[
+        {k:"psc_mfa_solution",t:"text",l:"MFA solution",req:1,
+         empty:"MFA solution is required. Name the MFA product or service in use."},
+        {k:"psc_mfa_coverage",t:"pills",l:"Where MFA is enforced",req:1,
+         o:["All remote and privileged","Some accounts only","Not enforced","Don't know"],
+         h:"All, some, or none on remote and privileged access."},
+        {k:"psc_contmon_tool",t:"text",l:"Continuous monitoring tool (optional)",
+         h:"Name only. Review cadence can wait for the call."},
+        {g:"System Security Plan",k:"psc_ssp_exists",t:"pills",l:"SSP exists?",req:1,o:YESNOPAR},
+        {k:"psc_ssp_artifacts_exist",t:"pills",l:"Do supporting SSP artifacts exist (policies, procedures)?",req:1,o:YESNODK,showIf:function(a){return sspish(a);}},
+        {k:"psc_ssp_artifact_types",t:"text",l:"Name the types that exist today",req:1,
+         h:"SSP, policies, procedures, diagrams, inventory. Types only. Do not upload.",
+         showIf:function(a){return a.psc_ssp_artifacts_exist==="Yes";}},
+        {g:"POA&M",k:"psc_poam_open",t:"pills",l:"Any POA&M / temporary deficiencies?",req:1,o:YESNONA},
+        {k:"psc_poam_conditional",t:"pills",l:"Are any POA&Ms conditional (time-boxed / allowed)?",req:1,o:YESNONA,
+         showIf:function(a){return a.psc_poam_open==="Yes";}},
+        {g:"During the assessment",k:"psc_fix_during_assessment",t:"pills",l:"Expect to fix remaining gaps during the assessment itself?",req:1,o:YESNODK},
+        {k:"psc_freeze_during_assessment",t:"pills",l:"Is a freeze planned during the assessment window?",req:1,o:YESNODK},
+        {k:"psc_migrate_during_assessment",t:"pills",l:"Is a migration planned during the assessment window?",req:1,o:YESNODK}
+      ]},
+    { id:"G", nav:"Review", title:"Review and submit",
+      blurb:"A recap of answers already given, two required confirmations, and Submit.",
+      fields:[
+        {g:"Required consents",k:"psc_consent_nocui",t:"check",req:1,
+         l:"I confirm that nothing submitted here is Controlled Unclassified Information, a CMMC UID, or a SPRS score."},
+        {k:"psc_consent_notassessment",t:"check",req:1,
+         l:"I understand this is not a CMMC assessment, designation, or SPRS posting. It gathers environment information so the C3PAO can identify what is being assessed."}
+      ]}
+  ];
+
+
+  function has(arr, v){ return !!arr && arr.indexOf(v) > -1; }
+  function sspish(a){ var v=a.psc_ssp_exists; return v==="Yes" || v==="Partial / in progress"; }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+  /* Loose email: local@host.tld. Allows +tags and uncommon TLDs. Not the
+     native type=email / tight regex that bounced Officials on Submit. */
+  function looksLikeEmail(v){
+    var s = String(v == null ? "" : v).trim();
+    var at = s.indexOf("@");
+    if (at < 1 || s.indexOf(" ") !== -1) return false;
+    var after = s.slice(at + 1);
+    var dot = after.indexOf(".");
+    return dot > 0 && dot < after.length - 1;
+  }
+  /* Same CAGE rule as src/lib/validate.ts: five letters or digits.
+     Harborline demo codes (8H2LP, 1H9QX, 4P0TT) stay valid. */
+  function looksLikeCage(v){
+    return /^[A-Za-z0-9]{5}$/.test(String(v == null ? "" : v).trim());
+  }
+  function looksLikeCageList(v){
+    var s = String(v == null ? "" : v).trim();
+    if (s.length > 80) return false;
+    return /^[A-Za-z0-9]{5}(?:\s*;\s*[A-Za-z0-9]{5})*$/.test(s);
+  }
+  function cageFieldError(k, v){
+    if (k === "psc_hlocage" && !looksLikeCage(v))
+      return "CAGE must be 5 letters or digits.";
+    if (k === "psc_cageinscope" && !looksLikeCageList(v))
+      return "In-scope CAGE must be 5-character codes, separated by semicolons.";
+    return "";
+  }
+
+  var A = {}, i = 0, b = 0, errs = {}, started = false, gapNote = null, submitted = false;
+
+  /* Repeating service providers -> psc_oscdiscovery_sp child rows. Max 5. */
+  var SP_MAX = 5;
+  var SP_FIELDS = [
+    {k:"name",         t:"text",  l:"Name", req:1},
+    {k:"email",        t:"email", l:"POC email", req:1},
+    {k:"poc_last",     t:"text",  l:"POC last name", req:1},
+    {k:"poc_first",    t:"text",  l:"POC first name", req:1},
+    {k:"poc_phone",    t:"tel",   l:"POC phone", req:1},
+    {k:"job",          t:"pills", l:"What does this provider do here?", req:1, o:PROVIDER_JOBS},
+    {k:"service_desc", t:"text",  l:"Short service description",
+     h:"Optional. If empty, we send the job label."},
+    {k:"cui_or_spd",   t:"pills", l:"Does this provider store, process, or transmit CUI, or only security-protection data?", req:1, o:CUI_VS_SPD},
+    {k:"fedramp",      t:"pills", l:"CSP authorization", req:1, o:PROVIDER_FEDRAMP,
+     showIf:function(sp){return sp.job==="CSP";}},
+    {k:"offering_name",t:"text",  l:"Marketplace service offering name", req:1,
+     showIf:function(sp){return sp.job==="CSP" && sp.fedramp==="FedRAMP Authorized";}},
+    {k:"own_cmmc",     t:"pills", l:"Does this provider need its own CMMC status?", req:1, o:YESNONA},
+    {k:"spcmmcstatus", t:"pills", l:"CMMC Status", req:1, o:SP_CMMC},
+    {k:"spsector",     t:"pills", l:"Provider sector (CISA)", o:CISA},
+    {k:"admin_access", t:"pills", l:"Admin, backup, or log access to CUI systems?", req:1, o:YESNONA},
+    {k:"crm_inherited",t:"pills", l:"Written CRM that names inherited vs OSC-owned practices?", req:1, o:YESNONA},
+    {k:"vendor_srm",   t:"pills", l:"Vendor shared-responsibility / product matrix on file for this provider?", req:1, o:YESNONA_ONLY}
+  ];
+  var SPS = [];
+  function blankProvider(){
+    var o = {}; SP_FIELDS.forEach(function(f){ o[f.k] = ""; }); return o;
+  }
+  STEPS.forEach(function(s){ s.fields.forEach(function(f){
+    A[f.k] = f.t==="multi" ? [] : (f.t==="check" ? false : (f.d || ""));
+  });});
+
+  /* Entire answer object + provider rows. No CUI on this form. */
+  var DRAFT_KEY = "psc:osc-draft";
+  function writeDraft(){
+    try {
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
+        A: A, SPS: SPS, i: i, b: b, started: started, gapNote: gapNote
+      }));
+    } catch (e) {}
+  }
+  function clearDraft(){
+    try { sessionStorage.removeItem(DRAFT_KEY); } catch (e) {}
+  }
+  function restoreDraft(){
+    try {
+      var raw = sessionStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      if (!d || typeof d !== "object") return;
+      if (d.A && typeof d.A === "object") {
+        Object.keys(A).forEach(function(k){
+          if (!(k in d.A)) return;
+          if (Array.isArray(A[k])) A[k] = Array.isArray(d.A[k]) ? d.A[k] : [];
+          else if (typeof A[k] === "boolean") A[k] = d.A[k] === true;
+          else A[k] = d.A[k] == null ? "" : String(d.A[k]);
+        });
+      }
+      if (!String(A.psc_cui_users || "").trim() && d.A && String(d.A.psc_employees || "").trim()) {
+        A.psc_cui_users = String(d.A.psc_employees);
+      }
+      if (Array.isArray(d.SPS)) {
+        SPS = d.SPS.map(function(row){
+          var o = blankProvider();
+          SP_FIELDS.forEach(function(f){
+            if (row && row[f.k] != null) o[f.k] = String(row[f.k]);
+          });
+          return o;
+        }).slice(0, SP_MAX);
+      }
+      /* Restore answers + step so Start continues mid-form. Do not restore
+         started — Welcome is a per-session gate (hard refresh shows intro). */
+      if (typeof d.i === "number") i = Math.max(0, Math.min(STEPS.length - 1, d.i | 0));
+      if (typeof d.b === "number") b = Math.max(0, d.b | 0);
+      if (d.gapNote && d.gapNote.navs) gapNote = d.gapNote;
+    } catch (e) {}
+  }
+  restoreDraft();
+
+  /* Query-only tester fill. No chrome, no Start hook. */
+  function intakeDemoQuery(){
+    try { return new URLSearchParams(location.search).get("demo") === "1"; }
+    catch (e) { return /(?:^|[?&])demo=1(?:&|$)/.test(String(location.search || "")); }
+  }
+  function applyHarborlineFill(){
+    A.psc_hqname = "Harborline Precision LLC";
+    A.psc_uei = "HBR1LN0SC014";
+    A.psc_oscname = "Harborline Precision";
+    A.psc_dba = "Harborline";
+    A.psc_address1 = "18 Thames St";
+    A.psc_address2 = "Suite 12";
+    A.psc_city = "Newport";
+    A.psc_state = "RI";
+    A.psc_zip = "02840";
+    A.psc_country = "United States";
+    A.psc_businessphone = "401-555-0188";
+    A.psc_website = "https://harborline.example";
+    A.psc_sector = "Defense Industrial Base";
+    A.psc_cui_users = "22";
+    A.psc_hlocage = "8H2LP";
+    A.psc_cageinscope = "8H2LP";
+    A.psc_scopemode = "Enclave";
+    A.psc_scopedesc = "GCC High tenant plus on-prem file share for DoD drawing work. Corporate M365 Commercial is out of scope.";
+    A.psc_ao_last = "Chen";
+    A.psc_ao_first = "Maya";
+    A.psc_ao_title = "Contracts manager / Affirming Official";
+    A.psc_ao_email = "maya.chen@harborline.example";
+    A.psc_ao_phone = "401-555-0188";
+    A.psc_tpoc_last = "Ortiz";
+    A.psc_tpoc_first = "Luis";
+    A.psc_tpoc_title = "IT lead";
+    A.psc_tpoc_email = "luis.ortiz@harborline.example";
+    A.psc_tpoc_phone = "401-555-0189";
+    /* Tenant child columns are not in Dataverse yet (the tenant admin creates
+       psc_oscdiscovery_sp). Default Providers to No so ?demo=1 Submit
+       succeeds on the live site. encodeProvider still posts Yes rows
+       (name/email/job/cui_or_spd/fedramp/offering + yesnona ints). */
+    A.psc_has_sps = "No";
+    A.psc_interview_roles_namable = "Yes";
+    A.psc_interview_role_names = "IT lead, contracts manager, CAD supervisor";
+    A.psc_cui_locations = ["M365 GCC High", "On-prem file shares / servers"];
+    A.psc_fedramp_m365gcchigh = "FedRAMP Authorized";
+    A.psc_fedramp_onprem = "N/A";
+    A.psc_cui_leaves_portable = "No";
+    A.psc_vdi_download_print = "N/A";
+    A.psc_cui_off_hq = "No";
+    A.psc_cui_backup_commercial = "No";
+    A.psc_cui_backup_where = "GCC High";
+    A.psc_physical_cui_observe = "No";
+    A.psc_virtual_tour_exposes_cui = "No";
+    A.psc_dlp_blocks_screenshare = "Yes";
+    A.psc_env_mode = "GCC High tenant";
+    A.psc_boundary_defined = "Yes";
+    A.psc_network_diagram = "Yes";
+    A.psc_diagram_vs_matrix = "Yes";
+    A.psc_separation = "Both";
+    A.psc_has_crma = "Yes";
+    A.psc_crma_handles_cui = "No";
+    A.psc_oos_can_reach_cui = "No";
+    A.psc_mfa_solution = "Entra ID MFA (number matching) + hardware keys for admin";
+    A.psc_mfa_coverage = "All remote and privileged";
+    A.psc_contmon_tool = "CrowdStrike + Microsoft Sentinel (GCC High)";
+    A.psc_ssp_exists = "Yes";
+    A.psc_ssp_artifacts_exist = "Yes";
+    A.psc_ssp_artifact_types = "SSP, policies, procedures, diagrams, inventory";
+    A.psc_poam_open = "No";
+    A.psc_fix_during_assessment = "No";
+    A.psc_freeze_during_assessment = "Yes";
+    A.psc_migrate_during_assessment = "No";
+    A.psc_consent_nocui = true;
+    A.psc_consent_notassessment = true;
+    SPS = [];
+  }
+  if (intakeDemoQuery()) {
+    applyHarborlineFill();
+    started = true;
+    i = 0;
+    b = 0;
+    writeDraft();
+  }
+
+  var elSteps=document.getElementById("pscSteps"), elTime=document.getElementById("pscTime"),
+      elIntro=document.getElementById("pscIntro"), elForm=document.getElementById("pscForm"),
+      elFooter=document.getElementById("pscFooter"), elTitle=document.getElementById("pscTitle"),
+      elBlurb=document.getElementById("pscBlurb"), elFields=document.getElementById("pscFields"),
+      elBack=document.getElementById("pscBack"), elNext=document.getElementById("pscNext");
+
+  /* Render the brand mark: logo if it loads, wordmark if not. */
+  (function mark(){
+    var el = document.getElementById("pscMark");
+    if (!el) return;
+    var word = '<span class="psc-wordmark">' + esc(BRAND.name) + '</span>';
+    if (!BRAND.logo) { el.innerHTML = word; return; }
+    var img = new Image();
+    img.onload  = function(){ el.innerHTML = '<img src="' + BRAND.logo + '" alt="' + esc(BRAND.name) + '">'; };
+    img.onerror = function(){ el.innerHTML = word; };
+    img.src = BRAND.logo;
+  })();
+
+  (function contact(){
+    var el = document.getElementById("pscContact");
+    var email = (BRAND.contactEmail || "assessors@example.com").trim();
+    if (!el || !email) return;
+    el.setAttribute("href", "mailto:" + email);
+    el.textContent = email;
+  })();
+
+  /* Required fields still missing on a given step. Drives the rail dots and
+     the Submit gap summary. Next never blocks on these. Same path for
+     CAGE, MFA, CUI host, consent, email, providers. */
+  function providerErrors(){
+    var out = {};
+    if (A.psc_has_sps !== "Yes") return out;
+    var named = 0;
+    SPS.forEach(function(sp, n){
+      if (String(sp.name || "").trim()) named++;
+      SP_FIELDS.forEach(function(f){
+        if (f.showIf && !f.showIf(sp)) return;
+        if (f.req && !String(sp[f.k] || "").trim()) out["sp"+n+"."+f.k] = "This is required.";
+        else if (f.t === "email" && String(sp[f.k] || "").trim() && !looksLikeEmail(sp[f.k]))
+          out["sp"+n+"."+f.k] = "Enter a valid email.";
+      });
+    });
+    if (!named) out.__providers__ = "Add at least one provider, or select No / N/A.";
+    return out;
+  }
+  function stepErrors(n){
+    var out = {};
+    STEPS[n].fields.forEach(function(f){
+      if (f.t === "providers") {
+        var pe = providerErrors();
+        Object.keys(pe).forEach(function(k){ out[k] = pe[k]; });
+        return;
+      }
+      if (!f.req || (f.showIf && !f.showIf(A))) return;
+      var v = A[f.k];
+      var empty = f.t==="multi" ? !v.length : (f.t==="check" ? !v : !String(v).trim());
+      if (empty) out[f.k] = f.empty || (f.t==="check" ? "Required to submit." : "This is required.");
+      else if (f.t==="email" && !looksLikeEmail(v)) out[f.k] = "Enter a valid email.";
+      else {
+        var cageErr = cageFieldError(f.k, v);
+        if (cageErr) out[f.k] = cageErr;
+      }
+    });
+    return out;
+  }
+  function stepIncomplete(n){ return Object.keys(stepErrors(n)).length > 0; }
+
+  function visible(f){ return !f.showIf || f.showIf(A); }
+
+  /* Intra-step beats, ported from src/lib/beats.ts. The rail still shows the
+     8 categories — beats are not nav items, they chunk one step into screens.
+     Fields not listed in any beat are appended to the last beat of that step. */
+  var BEATS = {
+    P1: [
+      ["psc_hqname","psc_uei","psc_oscname","psc_dba",
+       "psc_address1","psc_address2","psc_city","psc_state","psc_zip","psc_country",
+       "psc_businessphone","psc_website","psc_sector","psc_sectorother","psc_cui_users",
+       "psc_hlocage","psc_cageinscope","psc_scopemode","psc_scopedesc"]
+    ],
+    P2: [
+      ["psc_ao_last","psc_ao_first","psc_ao_title","psc_ao_email","psc_ao_phone",
+       "psc_tpoc_last","psc_tpoc_first","psc_tpoc_title","psc_tpoc_email","psc_tpoc_phone"]
+    ],
+    P3: [["psc_has_sps","__providers__"]],
+    E1: [["psc_interview_roles_namable","psc_interview_role_names"]],
+    E2: [
+      ["psc_cui_locations","psc_cui_locations_note",
+       "psc_fedramp_m365gcchigh","psc_fedramp_m365gcc","psc_fedramp_m365commercial",
+       "psc_fedramp_preveil","psc_fedramp_azuregov","psc_fedramp_awsgov",
+       "psc_fedramp_onprem","psc_fedramp_email","psc_fedramp_other"],
+      ["psc_cui_leaves_portable","psc_vdi_download_print","psc_cui_off_hq",
+       "psc_cui_off_hq_note","psc_cui_backup_commercial","psc_cui_backup_where"],
+      ["psc_physical_cui_observe","psc_virtual_tour_exposes_cui","psc_dlp_blocks_screenshare"],
+      ["psc_env_mode","psc_enclave_what","psc_boundary_defined","psc_separation"],
+      ["psc_network_diagram","psc_diagram_vs_matrix"]
+    ],
+    E3: [["psc_has_crma","psc_crma_handles_cui","psc_oos_can_reach_cui"]],
+    E4: [
+      ["psc_mfa_solution","psc_mfa_coverage","psc_contmon_tool"],
+      ["psc_ssp_exists","psc_ssp_artifacts_exist","psc_ssp_artifact_types",
+       "psc_poam_open","psc_poam_conditional",
+       "psc_fix_during_assessment","psc_freeze_during_assessment","psc_migrate_during_assessment"]
+    ],
+    G: [
+      ["__recap__"],
+      ["psc_consent_nocui","psc_consent_notassessment"]
+    ]
+  };
+
+  /* Beats for the current step, dropping any whose fields are all hidden. */
+  function beatsNow(){
+    var step = STEPS[i], map = BEATS[step.id] || [];
+    var listed = {};
+    map.forEach(function(b){ b.forEach(function(k){ if (k !== "__recap__") listed[k] = 1; }); });
+    var groups = map.map(function(keys){
+      if (keys[0] === "__recap__") return ["__recap__"];   // marker beat, not fields
+      return step.fields.filter(function(f){ return keys.indexOf(f.k) > -1 && visible(f); });
+    });
+    var orphans = step.fields.filter(function(f){ return !listed[f.k] && visible(f); });
+    if (orphans.length) groups[groups.length-1] = (groups[groups.length-1]||[]).concat(orphans);
+    return groups.filter(function(g){ return g.length; });
+  }
+
+
+  function validate(){
+    errs = {};
+    var groups = beatsNow(), here = groups[b] || [];
+    if (here[0] === "__recap__") return true;
+    if (here.length && here[0].t === "providers"){
+      if (A.psc_has_sps !== "Yes") return true;
+      SPS.forEach(function(sp, n){
+        SP_FIELDS.forEach(function(f){
+          if (f.showIf && !f.showIf(sp)) return;
+          if (f.req && !String(sp[f.k] || "").trim()) errs["sp"+n+"."+f.k] = "This is required.";
+          if (f.t === "email" && String(sp.email||"").trim() && !looksLikeEmail(sp.email))
+            errs["sp"+n+".email"] = "Enter a valid email.";
+        });
+      });
+      return !Object.keys(errs).length;
+    }
+    here.forEach(function(f){
+      if (!f.req) return;
+      var v = A[f.k];
+      var empty = f.t==="multi" ? !v.length : (f.t==="check" ? !v : !String(v).trim());
+      if (empty) errs[f.k] = f.empty || (f.t==="check" ? "Required to submit." : "This is required.");
+      else if (f.t==="email" && !looksLikeEmail(v)) errs[f.k] = "Enter a valid email.";
+      else {
+        var cageErr = cageFieldError(f.k, v);
+        if (cageErr) errs[f.k] = cageErr;
+      }
+    });
+    return !Object.keys(errs).length;
+  }
+
+  /* Review recap, mirroring reviewRecapRows() in IntakeForm.tsx. */
+  function recapHtml(){
+    var official = [A.psc_ao_first, A.psc_ao_last].filter(Boolean).join(" ");
+    var ssp = (A.psc_ssp_exists==="Yes" || A.psc_ssp_exists==="Partial / in progress")
+      ? [A.psc_ssp_exists, A.psc_ssp_artifacts_exist, A.psc_ssp_artifact_types].filter(Boolean).join(" \u00b7 ")
+      : A.psc_ssp_exists;
+    var poam = A.psc_poam_open==="Yes"
+      ? [A.psc_poam_open, A.psc_poam_conditional].filter(Boolean).join(" \u00b7 ")
+      : A.psc_poam_open;
+    var rows = [
+      ["Organization",  A.psc_oscname || A.psc_hqname],
+      ["Scope",         A.psc_scopemode],
+      ["Official",      official],
+      ["Providers",     A.psc_has_sps],
+      ["CUI locations", (A.psc_cui_locations || []).join("; ")],
+      ["Backups",       [A.psc_cui_backup_commercial, A.psc_cui_backup_where].filter(Boolean).join(" \u00b7 ")],
+      ["MFA",           [A.psc_mfa_solution, A.psc_mfa_coverage].filter(Boolean).join(" \u00b7 ")],
+      ["SSP",           ssp],
+      ["POA&M",         poam],
+      ["Fix during assessment", A.psc_fix_during_assessment],
+      ["Freeze",        A.psc_freeze_during_assessment],
+      ["Migration",     A.psc_migrate_during_assessment]
+    ].filter(function(r){ return String(r[1] || "").trim(); });
+    if (!rows.length)
+      return '<p class="psc-blurb">Nothing to recap yet. Next takes you to the last confirmations.</p>';
+    return '<dl class="psc-recap">' + rows.map(function(r){
+      return '<div><dt><button type="button" class="psc-recap-jump" data-recap="'+esc(r[0])+'">'+esc(r[0])+'</button></dt><dd>'+esc(r[1])+'</dd></div>';
+    }).join("") + '</dl>';
+  }
+
+  var RECAP_JUMP = {
+    "Organization": { step: "P1", beat: 0 },
+    "Scope": { step: "P1", beat: 0 },
+    "Official": { step: "P2", beat: 0 },
+    "Providers": { step: "P3", beat: 0 },
+    "CUI locations": { step: "E2", beat: 0 },
+    "Backups": { step: "E2", beat: 1 },
+    "MFA": { step: "E4", beat: 0 },
+    "SSP": { step: "E4", beat: 1 },
+    "POA&M": { step: "E4", beat: 1 },
+    "Fix during assessment": { step: "E4", beat: 1 },
+    "Freeze": { step: "E4", beat: 1 },
+    "Migration": { step: "E4", beat: 1 }
+  };
+
+  function onReviewConsents(){
+    var s = STEPS[i];
+    var groups = beatsNow();
+    return s && s.id === "G" && groups.length && b === groups.length - 1;
+  }
+
+  function gapNoteHtml(){
+    if (!gapNote || onReviewConsents()) return "";
+    var inline = {};
+    Object.keys(errs).forEach(function(k){ inline[errs[k]] = 1; });
+    var extra = gapNote.messages.filter(function(m){ return !inline[m]; });
+    return '<p class="t">Still required before submit</p>'
+      + '<p class="n">' + esc(gapNote.navs.join(" \u00b7 ")) + '</p>'
+      + extra.map(function(m){ return '<p class="m">'+esc(m)+'</p>'; }).join("");
+  }
+
+  /* Persistent footer control after a Submit gap-jump — not only in the
+     gap blurb. Hidden on the last Review beat. Rail Review chip always
+     works after Start (and returns here when gapNote is set). */
+  function returnReviewHtml(){
+    if (!gapNote || onReviewConsents()) return "";
+    return '<button type="button" class="psc-backreview" id="pscBackReview" aria-label="Return to submit">Back to Review</button>';
+  }
+
+  function beatHasGap(grp, e){
+    if (!grp || !grp.length || grp[0] === "__recap__") return false;
+    return grp.some(function(f){
+      if (!f) return false;
+      if (e[f.k]) return true;
+      if (f.t === "providers")
+        return Object.keys(e).some(function(k){ return k === "__providers__" || /^sp\d+\./.test(k); });
+      return false;
+    });
+  }
+
+  function firstIncompleteBeatAt(stepIdx){
+    var save = i; i = stepIdx;
+    var groups = beatsNow();
+    var e = stepErrors(stepIdx);
+    var hit = 0;
+    for (var g = 0; g < groups.length; g++){
+      if (beatHasGap(groups[g], e)){ hit = g; break; }
+    }
+    i = save;
+    return hit;
+  }
+
+  function collectBeatErrs(stepIdx, beatIdx){
+    var save = i; i = stepIdx;
+    var e = stepErrors(stepIdx);
+    var beatErrs = {};
+    var grp = beatsNow()[beatIdx] || [];
+    grp.forEach(function(f){
+      if (!f || typeof f === "string") return;
+      if (e[f.k]) beatErrs[f.k] = e[f.k];
+      if (f.t === "providers") {
+        Object.keys(e).forEach(function(k){
+          if (k === "__providers__" || /^sp\d+\./.test(k)) beatErrs[k] = e[k];
+        });
+      }
+    });
+    i = save;
+    return Object.keys(beatErrs).length ? beatErrs : e;
+  }
+
+  /* Submit recovery: first missing required field, any step/beat
+     (CAGE, MFA, CUI host, consent, email — same path). */
+  function firstIncompleteGap(){
+    var first = -1, navs = [], consentMsgs = [];
+    for (var n = 0; n < STEPS.length; n++){
+      var e = stepErrors(n);
+      if (!Object.keys(e).length) continue;
+      if (first < 0) first = n;
+      navs.push(STEPS[n].nav);
+      ["psc_consent_nocui","psc_consent_notassessment"].forEach(function(k){
+        if (e[k]) consentMsgs.push(e[k]);
+      });
+    }
+    if (first < 0) return null;
+    var beat = firstIncompleteBeatAt(first);
+    return {
+      i: first,
+      b: beat,
+      errs: collectBeatErrs(first, beat),
+      gapNote: { navs: navs, messages: consentMsgs }
+    };
+  }
+
+  function reviewRailBeat(gapActive){
+    var save = i; i = STEPS.length - 1;
+    var groups = beatsNow();
+    i = save;
+    if (gapActive) return Math.max(0, groups.length - 1);
+    return 0;
+  }
+
+  function goReviewSubmit(){
+    i = STEPS.length - 1;
+    b = reviewRailBeat(true);
+    render();
+  }
+
+  /* Footer gap note stays until the missing fields are filled. Checking
+     the last consent (or any other gap) must clear it — no stale note. */
+  function refreshGapNote(){
+    if (!gapNote) return;
+    var gap = firstIncompleteGap();
+    gapNote = gap ? gap.gapNote : null;
+  }
+
+  function focusFirstErr(){
+    if (elNext && elNext.blur) elNext.blur();
+    var keys = Object.keys(errs);
+    if (!keys.length) return;
+    var key = keys[0];
+    var wrap = null;
+    var sp = /^sp(\d+)\.(.+)$/.exec(key);
+    if (sp) wrap = elFields.querySelector('[data-sp="'+sp[1]+'"] [data-spk="'+sp[2]+'"]');
+    else if (key === "__providers__") wrap = elFields.querySelector("[data-spk]") || elFields.querySelector('[data-k="__providers__"]');
+    else wrap = elFields.querySelector('[data-k="'+key+'"]');
+    if (!wrap) return;
+    wrap.scrollIntoView({ block: "center" });
+    var invalid = wrap.querySelector("[aria-invalid='true']");
+    var focusable = invalid
+      || (wrap.classList && wrap.classList.contains("psc-consent") ? wrap : null)
+      || wrap.querySelector("input:not([type=hidden]):not([type=checkbox]), textarea, select, button")
+      || wrap.querySelector("input, button")
+      || wrap;
+    if (focusable && focusable.focus) {
+      if (focusable === wrap && !wrap.getAttribute("tabindex")) wrap.setAttribute("tabindex", "-1");
+      focusable.focus();
+    }
+  }
+
+  function visibleKeys(){
+    return STEPS[i].fields.filter(visible).map(function(f){ return f.k; });
+  }
+
+  function scrollToRevealed(before){
+    var neu = visibleKeys().filter(function(k){ return before.indexOf(k) < 0; });
+    if (!neu.length) return;
+    var el = elFields.querySelector('[data-k="'+neu[0]+'"]');
+    if (el) el.scrollIntoView({ block: "center" });
+  }
+
+  function providersHtml(){
+    if (!SPS.length) SPS.push(blankProvider());
+    var h = '<div class="psc-sps">';
+    SPS.forEach(function(sp, n){
+      h += '<div class="psc-sp" data-sp="'+n+'">'
+         + '<div class="psc-sp-head"><span>Provider '+(n+1)+'</span>'
+         + (SPS.length > 1 ? '<button type="button" class="psc-sp-del" data-del="'+n+'">Remove</button>' : '')
+         + '</div>';
+      SP_FIELDS.forEach(function(f){
+        if (f.showIf && !f.showIf(sp)) return;
+        var v = sp[f.k] || "", e = errs["sp"+n+"."+f.k];
+        h += '<div class="psc-sp-f" data-spk="'+f.k+'">'
+           + '<label class="psc-label">'+esc(f.l)+(f.req?' *':'')+'</label>';
+        if (f.t === "email")
+          h += '<input class="psc-input" type="text" inputmode="email" autocomplete="email" value="'+esc(v)+'">';
+        else if (f.t === "text")
+          h += '<input class="psc-input" type="text" value="'+esc(v)+'">';
+        else {
+          h += '<div class="psc-pills" data-count="'+f.o.length+'">';
+          f.o.forEach(function(o){
+            h += '<button type="button" class="psc-pill'+(v===o?' is-on':'')+'" data-v="'+esc(o)+'">'+esc(o)+'</button>';
+          });
+          h += '</div>';
+        }
+        if (e) h += '<p class="psc-error">'+esc(e)+'</p>';
+        h += '</div>';
+      });
+      h += '</div>';
+    });
+    if (SPS.length < SP_MAX)
+      h += '<button type="button" class="psc-sp-add" id="pscSpAdd">+ Add another provider</button>';
+    return h + '</div>';
+  }
+
+  function fieldHtml(f){
+    if (f.t === "providers") return '<div data-k="'+f.k+'">'+providersHtml()+'</div>';
+    var v = A[f.k], e = errs[f.k];
+    if (f.t === "check"){
+      return '<label class="psc-consent'+(v?' is-on':'')+'" data-k="'+f.k+'" tabindex="-1"'
+        + (e ? ' aria-invalid="true"' : '') + '>'
+        + '<span class="tick">&#10003;</span><input type="checkbox"'+(v?' checked':'')
+        + (e ? ' aria-invalid="true"' : '') + '>'
+        + '<span>'+esc(f.l)+'</span></label>'
+        + (e ? '<p class="psc-error" style="margin-left:1.7rem">'+esc(e)+'</p>' : '');
+    }
+    var h = '<div data-k="'+f.k+'">'
+      + '<label class="psc-label">'+esc(f.l)+(f.req?' *':'')
+      + (f.tip ? '<span class="psc-tip" title="'+esc(f.tip)+'">i</span>' : '') + '</label>';
+    if (f.h) h += '<p class="psc-hint">'+esc(f.h)+'</p>';
+
+    if (f.t==="email")
+      h += '<input class="psc-input" type="text" inputmode="email" autocomplete="email" value="'+esc(v)+'">';
+    else if (f.t==="text"||f.t==="tel")
+      h += '<input class="psc-input" type="'+f.t+'" value="'+esc(v)+'">';
+    else if (f.t==="area")
+      h += '<textarea class="psc-textarea">'+esc(v)+'</textarea>';
+    else if (f.t==="select"){
+      h += '<select class="psc-select"><option value="">Select&hellip;</option>';
+      f.o.forEach(function(o){ h += '<option'+(v===o?' selected':'')+'>'+esc(o)+'</option>'; });
+      h += '</select>';
+    }
+    else if (f.t==="pills"){
+      h += '<div class="psc-pills" data-count="'+f.o.length+'">';
+      f.o.forEach(function(o){
+        h += '<button type="button" class="psc-pill'+(v===o?' is-on':'')+'" aria-pressed="'
+           + (v===o) + '" data-v="'+esc(o)+'">'+esc(o)+'</button>';
+      });
+      h += '</div>';
+    }
+    else if (f.t==="multi"){
+      h += '<div class="psc-stack">';
+      f.o.forEach(function(o){
+        var on = has(v,o);
+        h += '<label class="psc-stack-row'+(on?' is-on':'')+'" data-v="'+esc(o)+'">'
+           + '<input type="checkbox"'+(on?' checked':'')+'><span>'+esc(o)+'</span></label>';
+      });
+      h += '</div>';
+    }
+    if (e) h += '<p class="psc-error">'+esc(e)+'</p>';
+    return h + '</div>';
+  }
+
+  function flushInputs(){
+    elFields.querySelectorAll("[data-k] input, [data-k] textarea, [data-k] select").forEach(function(el){
+      var w = el.closest("[data-k]");
+      if (!w || el.type === "checkbox") return;
+      A[w.dataset.k] = el.value;
+    });
+    elFields.querySelectorAll("[data-sp] [data-spk] input").forEach(function(el){
+      var card = el.closest("[data-sp]"), fw = el.closest("[data-spk]");
+      if (card && fw) SPS[+card.dataset.sp][fw.dataset.spk] = el.value;
+    });
+  }
+
+  /* Stay on this page after a good POST. /thank-you is not a Power Pages route.
+     Dedicated success view — do not reuse the welcome home. */
+  function showSuccess(){
+    submitted = true;
+    var root = document.querySelector(".psc-intake");
+    if (root) root.classList.add("is-done");
+    elIntro.style.display = "none";
+    elIntro.setAttribute("hidden", "");
+    elIntro.setAttribute("aria-hidden", "true");
+    elForm.style.display = "none";
+    elFooter.style.display = "none";
+    elSteps.style.display = "none";
+    var banner = document.getElementById("pscBanner");
+    if (banner) banner.style.display = "none";
+    var fill = document.getElementById("pscFill");
+    if (fill && fill.parentNode) fill.parentNode.style.display = "none";
+    var start = document.getElementById("pscStart");
+    if (start) {
+      start.disabled = true;
+      start.setAttribute("hidden", "");
+      start.setAttribute("aria-disabled", "true");
+    }
+    var done = document.getElementById("pscDone");
+    if (done) {
+      done.hidden = false;
+      done.removeAttribute("hidden");
+      done.style.display = "";
+    }
+    if (elNext) { elNext.disabled = true; elNext.textContent = "Submit"; }
+    var well = document.querySelector(".psc-well");
+    if (well) well.scrollTop = 0;
+  }
+
+  function render(opts){
+    opts = opts || {};
+    if (submitted){ showSuccess(); return; }
+    if (!started){
+      elIntro.style.display=""; elForm.style.display="none"; elFooter.style.display="none";
+      /* Welcome: all eight chips stay quiet until Start. No gold current pill. */
+      elSteps.innerHTML = STEPS.map(function(x){
+        return '<li><span class="psc-step">'+esc(x.nav)+'</span></li>';
+      }).join("");
+      elTime.textContent = "";
+      writeDraft();
+      return;
+    }
+    flushInputs();
+    refreshGapNote();
+    elIntro.style.display="none"; elForm.style.display=""; elFooter.style.display="";
+    document.getElementById("pscBanner").style.display = "flex";
+    var s = STEPS[i];
+    var beatCount = (BEATS[s.id] || []).length || 1;
+    var frac = beatCount > 1 ? Math.min(1, Math.max(0, b / beatCount)) : 0;
+    var remaining = Math.max(0, STEPS.length - i - frac);
+    var minutes = Math.max(1, Math.round(remaining * 2));
+    var time = (i === 0 && b === 0) ? "About 16 minutes left" : "About " + minutes + " minutes left";
+    elTime.textContent = (i + 1) + " of " + STEPS.length + " \u00b7 " +
+      (beatCount > 1 ? (b + 1) + " of " + beatCount + " \u00b7 " : "") + time;
+    elSteps.innerHTML = STEPS.map(function(x,n){
+      var on = n===i, gap = !on && stepIncomplete(n), done = n<i && !gap;
+      return '<li><button type="button" class="psc-step'+(done?' is-done':'')+'"'
+        + (on?' aria-current="step"':'') + ' data-n="'+n+'">'
+        + (done ? '&#10003; ' : '')
+        + (gap ? '<span class="psc-gapdot" title="Still required"></span>' : '')
+        + esc(x.nav) + '</button></li>';
+    }).join("");
+    elTitle.textContent = s.title;
+    elBlurb.textContent = s.blurb;
+
+    var groups = beatsNow();
+    if (b >= groups.length) b = Math.max(0, groups.length - 1);
+    var out = "", lastGroup = null;
+    if ((BEATS[s.id] || [])[b] && (BEATS[s.id][b] || [])[0] === "__recap__") {
+      elFields.innerHTML = recapHtml();
+      finishRender(groups, opts);
+      return;
+    }
+    (groups[b] || []).forEach(function(f){
+      if (f.g && f.g !== lastGroup){ out += '<p class="psc-group">'+esc(f.g)+'</p>'; lastGroup = f.g; }
+      out += fieldHtml(f);
+    });
+    elFields.innerHTML = out;
+    finishRender(groups, opts);
+  }
+
+  function finishRender(groups, opts){
+    opts = opts || {};
+    var last = (b >= groups.length - 1);
+    elNext.innerHTML = (i===STEPS.length-1 && last) ? "Submit" : "Next";
+    var frac = groups.length > 1 ? b / (groups.length - 1) : 1;
+    var pct = Math.min(100, Math.max(0, ((i + 0.8 + 0.2 * frac) / STEPS.length) * 100));
+    document.getElementById("pscFill").style.width = pct + "%";
+    var gapEl = document.getElementById("pscGap");
+    if (gapEl) gapEl.innerHTML = gapNoteHtml();
+    var retEl = document.getElementById("pscReturnReview");
+    if (retEl) retEl.innerHTML = returnReviewHtml();
+    writeDraft();
+    if (!opts.keepScroll) document.querySelector(".psc-well").scrollTop = 0;
+  }
+
+  elFields.addEventListener("input", function(ev){
+    var spCard = ev.target.closest("[data-sp]");
+    if (spCard){
+      var fw = ev.target.closest("[data-spk]");
+      if (fw){ SPS[+spCard.dataset.sp][fw.dataset.spk] = ev.target.value; writeDraft(); return; }
+    }
+    var w = ev.target.closest("[data-k]"); if (!w) return;
+    if (ev.target.type === "checkbox") return;
+    A[w.dataset.k] = ev.target.value;
+    writeDraft();
+  });
+
+  elFields.addEventListener("change", function(ev){
+    var w = ev.target.closest("[data-k]"); if (!w) return;
+    var k = w.dataset.k;
+    var f = STEPS[i].fields.filter(function(x){return x.k===k;})[0];
+    if (!f) return;
+    if (f.t==="check"){
+      if (ev.isTrusted === false) return;
+      var beforeC = visibleKeys();
+      A[k] = ev.target.checked === true;
+      render({ keepScroll: true });
+      scrollToRevealed(beforeC);
+      return;
+    }
+    if (f.t==="select"){ var beforeS = visibleKeys(); A[k] = ev.target.value; render({ keepScroll: true }); scrollToRevealed(beforeS); return; }
+    if (f.t==="multi"){
+      var lab = ev.target.closest(".psc-stack-row"); if (!lab) return;
+      var val = lab.dataset.v, cur = A[k].slice(), ex = f.excl || [];
+      if (ex.indexOf(val)>-1) cur = has(cur,val) ? [] : [val];
+      else if (has(cur,val)) cur = cur.filter(function(x){return x!==val;});
+      else cur = cur.filter(function(x){return ex.indexOf(x)<0;}).concat([val]);
+      var beforeM = visibleKeys();
+      A[k] = cur; render({ keepScroll: true }); scrollToRevealed(beforeM);
+    }
+  });
+
+  elFields.addEventListener("click", function(ev){
+    var recapBtn = ev.target.closest(".psc-recap-jump");
+    if (recapBtn){
+      var spec = RECAP_JUMP[recapBtn.getAttribute("data-recap")];
+      if (!spec) return;
+      var si = -1;
+      STEPS.forEach(function(st, n){ if (st.id === spec.step) si = n; });
+      if (si < 0) return;
+      i = si;
+      b = spec.beat;
+      errs = {};
+      render();
+      return;
+    }
+    var add = ev.target.closest("#pscSpAdd");
+    if (add){ if (SPS.length < SP_MAX) SPS.push(blankProvider()); render({ keepScroll: true }); return; }
+    var del = ev.target.closest(".psc-sp-del");
+    if (del){ SPS.splice(+del.dataset.del, 1); if (!SPS.length) SPS.push(blankProvider()); render({ keepScroll: true }); return; }
+
+    var spPill = ev.target.closest(".psc-sp .psc-pill");
+    if (spPill){
+      var card = spPill.closest("[data-sp]"), fw = spPill.closest("[data-spk]");
+      SPS[+card.dataset.sp][fw.dataset.spk] = spPill.dataset.v;
+      render({ keepScroll: true }); return;
+    }
+
+    var p = ev.target.closest(".psc-pill"); if (!p) return;
+    var beforeP = visibleKeys();
+    var pk = p.closest("[data-k]").dataset.k;
+    A[pk] = p.dataset.v;
+    /* Keep SPS across No↔Yes. Hidden when not Yes — do not wipe. */
+    render({ keepScroll: true });
+    scrollToRevealed(beforeP);
+  });
+
+  elSteps.addEventListener("click", function(ev){
+    if (submitted) return;
+    var btn = ev.target.closest("button[data-n]"); if (!btn) return;
+    i = +btn.dataset.n;
+    errs = {};
+    /* After Start every chip is a jump. First Review visit lands on recap.
+       After a Submit gap-jump, Back to Review may land on consents. */
+    if (STEPS[i].id === "G") b = reviewRailBeat(!!gapNote);
+    else b = firstIncompleteBeatAt(i);
+    render();
+  });
+
+  document.getElementById("pscFooter").addEventListener("click", function(ev){
+    if (submitted) return;
+    if (ev.target.closest("#pscBackReview")) goReviewSubmit();
+  });
+
+  function begin(){ if (submitted) return; started = true; errs = {}; render(); }
+  document.getElementById("pscStart").addEventListener("click", begin);
+
+  elBack.addEventListener("click", function(){
+    if (submitted) return;
+    errs = {};
+    if (b > 0){ b--; render(); return; }
+    if (i > 0){ i--; b = Math.max(0, beatsNow().length - 1); render(); return; }
+    started = false; render();
+  });
+
+  elNext.addEventListener("click", function(){
+    if (submitted) return;
+    /* Next never blocks. Errors show inline; only Submit jumps. */
+    if (b < beatsNow().length - 1){ errs = {}; b++; render(); return; }
+    if (i < STEPS.length - 1){ errs = {}; i++; b = 0; render(); return; }
+
+    var gap = firstIncompleteGap();
+    if (gap){
+      gapNote = gap.gapNote;
+      i = gap.i;
+      b = gap.b;
+      errs = gap.errs;
+      render();
+      requestAnimationFrame(function(){ focusFirstErr(); });
+      return;
+    }
+    gapNote = null;
+    submit();
+  });
+
+  /* Anti-forgery token. Power Pages exposes it three ways depending on what
+     the page contains; a page with no Dataverse form has no hidden input, so
+     try the shell API first and fall back. */
+  function token(){
+    if (window.shell && typeof shell.getTokenDeferred === "function") {
+      try {
+        var t = shell.getTokenDeferred();
+        if (t && typeof t.done === "function") return t;     // jQuery deferred
+      } catch (e) {}
+    }
+    var el = document.querySelector('input[name="__RequestVerificationToken"]');
+    if (el && el.value) return el.value;
+    var meta = document.querySelector('meta[name="__RequestVerificationToken"]');
+    return meta ? meta.content : "";
+  }
+
+  /* Resolve token() to a plain string, whether it came back sync or deferred. */
+  function withToken(cb){
+    var t = token();
+    if (t && typeof t.done === "function") {
+      t.done(function(v){ cb(v || ""); }).fail(function(){ cb(""); });
+    } else {
+      cb(t || "");
+    }
+  }
+
+  /* Option values must match the maker kit (docs/maker/01-dataverse.md):
+     labels in listed order, values 100000000 + index.
+     If a 400 remains, the tenant choice values were created differently —
+     do not invent a second sequence. */
+  var CHOICE_SETS = {
+    psc_yesnodk: ["Yes","No","Don't know"],
+    psc_yesnona: ["Yes","No","N/A","Don't know"],
+    psc_yesnopartial: ["Yes","Partial / in progress","No"],
+    psc_cisasector: ["Defense Industrial Base","Critical Manufacturing","Information Technology",
+      "Cloud Service Provider","Chemical","Commercial Facilities","Communications","Dams",
+      "Emergency Services","Energy","Financial Services","Food and Agriculture",
+      "Government Facilities","Healthcare and Public Health",
+      "Nuclear Reactors, Materials, and Waste","Transportation Systems",
+      "Water and Wastewater Systems","Other"],
+    psc_scopemode: ["Enterprise","Enclave"],
+    psc_envmode: ["GCC High tenant","PreVeil","Other named enclave","Broader environment","N/A"],
+    psc_separation: ["Logical","Physical","Both","Neither / unclear","N/A"],
+    psc_cuilocation: ["M365 GCC High","M365 GCC","M365 Commercial","PreVeil","Azure Government",
+      "AWS GovCloud","On-prem file shares / servers","Email (non-PreVeil)","Other","N/A / not sure"],
+    psc_hostfedramp: ["FedRAMP Authorized","DoD equivalent + BoE","SPD only","Not authorized","Don't know","N/A"],
+    psc_mfacoverage: ["All remote and privileged","Some accounts only","Not enforced","Don't know"],
+    psc_spcmmcstatus: ["Not assessed","Seeking L2","L2 Self","L2 C3PAO","Unknown","N/A"]
+  };
+
+  /* Kit Choice columns. Sector is single-select here; POST the one CISA int. */
+  var FIELD_SET = {
+    psc_sector: "psc_cisasector",
+    psc_scopemode: "psc_scopemode",
+    psc_has_sps: "psc_yesnona",
+    psc_interview_roles_namable: "psc_yesnodk",
+    psc_cui_locations: "psc_cuilocation",
+    psc_fedramp_m365gcchigh: "psc_hostfedramp",
+    psc_fedramp_m365gcc: "psc_hostfedramp",
+    psc_fedramp_m365commercial: "psc_hostfedramp",
+    psc_fedramp_preveil: "psc_hostfedramp",
+    psc_fedramp_azuregov: "psc_hostfedramp",
+    psc_fedramp_awsgov: "psc_hostfedramp",
+    psc_fedramp_onprem: "psc_hostfedramp",
+    psc_fedramp_email: "psc_hostfedramp",
+    psc_fedramp_other: "psc_hostfedramp",
+    psc_cui_leaves_portable: "psc_yesnodk",
+    psc_vdi_download_print: "psc_yesnona",
+    psc_cui_off_hq: "psc_yesnodk",
+    psc_cui_backup_commercial: "psc_yesnona",
+    psc_physical_cui_observe: "psc_yesnodk",
+    psc_virtual_tour_exposes_cui: "psc_yesnodk",
+    psc_dlp_blocks_screenshare: "psc_yesnona",
+    psc_env_mode: "psc_envmode",
+    psc_boundary_defined: "psc_yesnodk",
+    psc_network_diagram: "psc_yesnodk",
+    psc_diagram_vs_matrix: "psc_yesnodk",
+    psc_separation: "psc_separation",
+    psc_has_crma: "psc_yesnodk",
+    psc_crma_handles_cui: "psc_yesnodk",
+    psc_oos_can_reach_cui: "psc_yesnona",
+    psc_mfa_coverage: "psc_mfacoverage",
+    psc_ssp_exists: "psc_yesnopartial",
+    psc_ssp_matches: "psc_yesnodk",
+    psc_ssp_artifacts_exist: "psc_yesnodk",
+    psc_inventory_exists: "psc_yesnopartial",
+    psc_inventory_current: "psc_yesnodk",
+    psc_poam_open: "psc_yesnona",
+    psc_poam_conditional: "psc_yesnona",
+    psc_fix_during_assessment: "psc_yesnodk",
+    psc_freeze_during_assessment: "psc_yesnodk",
+    psc_migrate_during_assessment: "psc_yesnodk"
+    /* psc_cui_backup_where: text 100 — no kit Choice set. Send the label string. */
+  };
+
+  /* Provider Choice columns that reuse a kit set. job / cui_or_spd / fedramp
+     are not in the kit — do not invent 100000000+index for those labels. */
+  var SP_FIELD_SET = {
+    own_cmmc: "psc_yesnona",
+    admin_access: "psc_yesnona",
+    crm_inherited: "psc_yesnona",
+    vendor_srm: "psc_yesnona",
+    spcmmcstatus: "psc_spcmmcstatus",
+    spsector: "psc_cisasector"
+  };
+
+  var DROPPED = {
+    psc_employees:1, psc_device_classes:1,
+    psc_cui_flow:1, psc_esp_kinds:1, psc_specialized_kinds:1
+  };
+  function isDropped(k){
+    return !!DROPPED[k] || /^psc_count_/.test(k);
+  }
+
+  function choiceInt(setName, label){
+    var labs = CHOICE_SETS[setName];
+    if (!labs) return null;
+    var idx = labs.indexOf(label);
+    return idx < 0 ? null : 100000000 + idx;
+  }
+
+  function setForOptions(opts){
+    if (!opts || !opts.length) return null;
+    var names = Object.keys(CHOICE_SETS);
+    for (var i = 0; i < names.length; i++){
+      var labs = CHOICE_SETS[names[i]];
+      if (labs.length !== opts.length) continue;
+      var ok = true;
+      for (var j = 0; j < labs.length; j++) if (labs[j] !== opts[j]) { ok = false; break; }
+      if (ok) return names[i];
+    }
+    return null;
+  }
+
+  var mapErrors = [];
+
+  function encodeChoice(setName, label, pretty){
+    if (String(label || "").trim() === "") return null;
+    var n = choiceInt(setName, label);
+    if (n == null){
+      mapErrors.push((pretty || label) + " (\u201c" + label + "\u201d)");
+      return null;
+    }
+    return n;
+  }
+
+  function payload(){
+    var body = {};
+    STEPS.forEach(function(s){ s.fields.forEach(function(f){
+      if (f.t === "providers" || isDropped(f.k)) return;
+      var v = A[f.k];
+      if (f.t === "multi"){
+        var setName = FIELD_SET[f.k] || setForOptions(f.o);
+        if (!setName){
+          /* No kit Choice set — send labels or omit. Never invent ints. */
+          if (v && v.length) body[f.k] = v.join(", ");
+          return;
+        }
+        var ints = [];
+        (v || []).forEach(function(lab){
+          var n = encodeChoice(setName, lab, f.l);
+          if (n != null) ints.push(n);
+        });
+        if (ints.length) body[f.k] = ints.join(",");
+        return;
+      }
+      if (f.t === "pills" || f.t === "select"){
+        if (String(v).trim() === "") return;
+        var setName = FIELD_SET[f.k] || setForOptions(f.o);
+        if (!setName){
+          /* No kit Choice set (e.g. backup class). Send the string. Never invent 100000000+index. */
+          body[f.k] = String(v);
+          return;
+        }
+        var n = encodeChoice(setName, v, f.l);
+        if (n != null) body[f.k] = n;
+        return;
+      }
+      if (f.t === "check"){
+        /* Two-option Yes/No in Dataverse — boolean, not psc_yesnodk. */
+        body[f.k] = !!v;
+        return;
+      }
+      if (String(v).trim() !== "") body[f.k] = v;
+    });});
+    Object.keys(body).forEach(function(k){ if (isDropped(k)) delete body[k]; });
+    /* Intake asks CUI-access users (`psc_cui_users`), not org headcount.
+       Existing Dataverse still has required `psc_employees` — copy the same answer. */
+    if (A.psc_cui_users) body.psc_employees = A.psc_cui_users;
+    body.psc_name = (A.psc_oscname || A.psc_hqname || "OSC") + " - " + new Date().toISOString().slice(0,10);
+    return body;
+  }
+
+  /* Yes encoding: psc_name, psc_email, psc_poc_last/first/phone, text labels
+     for job / service_desc / cui_or_spd / fedramp / offering_name,
+     psc_yesnona ints for own_cmmc / admin_access / crm_inherited / vendor_srm,
+     psc_spcmmcstatus int, optional psc_spsector CISA int.
+     service_desc defaults from job if empty. Bind psc_OSCDiscovery@odata.bind.
+     Max 5. Do not flatten onto the parent. Do not convert Choice to Text. */
+  function encodeProvider(sp){
+    var row = {};
+    SP_FIELDS.forEach(function(f){
+      var raw = sp[f.k];
+      if (f.k === "service_desc" && !String(raw || "").trim()) raw = sp.job || "";
+      if (!String(raw || "").trim()) return;
+      if (f.t === "pills"){
+        var setName = SP_FIELD_SET[f.k] || setForOptions(f.o);
+        if (!setName){
+          /* job / cui_or_spd / provider FedRAMP are not in the kit — send the string. */
+          row["psc_" + f.k] = String(raw);
+          return;
+        }
+        var n = encodeChoice(setName, raw, f.l);
+        if (n != null) row["psc_" + f.k] = n;
+      } else {
+        row["psc_" + f.k] = raw;
+      }
+    });
+    return row;
+  }
+
+  function submit(){
+    if (submitted) return;
+    if (A.psc_consent_nocui !== true || A.psc_consent_notassessment !== true) {
+      var gap = firstIncompleteGap();
+      if (gap){
+        gapNote = gap.gapNote;
+        i = gap.i;
+        b = gap.b;
+        errs = gap.errs;
+      } else {
+        i = STEPS.length - 1;
+        b = reviewRailBeat(true);
+        errs = stepErrors(i);
+      }
+      render();
+      requestAnimationFrame(function(){ focusFirstErr(); });
+      return;
+    }
+    mapErrors = [];
+    var body = payload();
+    var kids = [];
+    if (A.psc_has_sps === "Yes") {
+      SPS.filter(function(sp){ return String(sp.name || "").trim(); })
+        .forEach(function(sp){ kids.push(encodeProvider(sp)); });
+    }
+    if (mapErrors.length){
+      elFields.insertAdjacentHTML("afterbegin",
+        '<p class="psc-error" style="margin-bottom:1rem">Submit stopped — these answers have no maker-kit option value and were not sent: '
+        + esc(mapErrors.join("; "))
+        + ". Option values must match docs/maker/01-dataverse.md. Do not invent a second sequence.</p>");
+      return;
+    }
+    elNext.disabled = true; elNext.textContent = "Submitting\u2026";
+    withToken(function(tok){
+    function apiHeaders(prefer){
+      var h = { "Content-Type":"application/json", "Accept":"application/json",
+                "OData-MaxVersion":"4.0", "OData-Version":"4.0",
+                "__RequestVerificationToken": tok };
+      if (prefer) h.Prefer = prefer;
+      return h;
+    }
+    /* Prefer return=representation so we get psc_oscdiscoveryid without a GET
+       (Anonymous has no Read). return=minimal: read OData-EntityId / Location. */
+    function parentId(r, json){
+      if (json && json.psc_oscdiscoveryid) return json.psc_oscdiscoveryid;
+      var loc = "";
+      try { loc = r.headers.get("OData-EntityId") || r.headers.get("Location") || ""; }
+      catch (e) {}
+      var m = String(loc).match(/psc_oscdiscoveries\(([^)]+)\)/i);
+      return m ? m[1] : "";
+    }
+    function readParent(r){
+      var ct = "";
+      try { ct = r.headers.get("content-type") || ""; } catch (e) {}
+      if (r.status === 204 || !/json/i.test(ct)) return Promise.resolve({ r: r, json: null });
+      return r.json().then(function(json){ return { r: r, json: json }; })
+        .catch(function(){ return { r: r, json: null }; });
+    }
+    function postProviders(id){
+      if (!id) {
+        throw new Error("Providers were not saved — parent id did not return. Anonymous has Create only (no Read). Keep Prefer: return=representation, or create psc_oscdiscovery_sp in the tenant.");
+      }
+      return Promise.all(kids.map(function(kid){
+        kid["psc_OSCDiscovery@odata.bind"] = "/psc_oscdiscoveries(" + id + ")";
+        return fetch("/_api/psc_oscdiscovery_sps", {
+          method: "POST",
+          headers: apiHeaders(),
+          body: JSON.stringify(kid)
+        }).then(function(cr){
+          if (cr.ok) return cr;
+          return cr.text().then(function(t){
+            throw new Error("Provider row was not created (" + cr.status + "). Check Webapi/psc_oscdiscovery_sp/enabled, table permissions (Anonymous Create on the child + Append To parent), and tenant columns. " + t);
+          });
+        });
+      }));
+    }
+    fetch("/_api/psc_oscdiscoveries", {
+      method: "POST",
+      headers: apiHeaders("return=representation"),
+      body: JSON.stringify(body)
+    }).then(function(r){
+      if (!r.ok) return r.text().then(function(t){ throw new Error(r.status+" "+t); });
+      if (!kids.length) return null;
+      return readParent(r).then(function(parsed){
+        return postProviders(parentId(parsed.r, parsed.json));
+      });
+    }).then(function(){
+      clearDraft();
+      showSuccess();
+    }).catch(function(err){
+      elNext.disabled = false; elNext.textContent = "Submit";
+      elFields.insertAdjacentHTML("afterbegin",
+        '<p class="psc-error" style="margin-bottom:1rem">Submit failed: '+esc(err.message)+'</p>');
+    });
+    });
+  }
+
+  render();
+})();
+</script>

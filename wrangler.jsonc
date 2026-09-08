@@ -1,0 +1,43 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Public Next.js intake. Separate Worker from workers/prescope-submit
+  // (wrangler.toml name = "prescope-submit"). Do not reuse that name.
+  "name": "prescope-intake",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-09-04",
+  "compatibility_flags": [
+    // Required by @opennextjs/cloudflare (compat date ≥ 2024-09-23).
+    "nodejs_compat",
+    // Lets the intake Worker fetch the public prescope-submit URL.
+    "global_fetch_strictly_public"
+  ],
+  "workers_dev": true,
+  "preview_urls": true,
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      // Self-reference. Must match "name" above.
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "prescope-intake"
+    }
+  ],
+  "images": {
+    "binding": "IMAGES"
+  },
+  "observability": {
+    "enabled": true
+  }
+  // Runtime secrets / vars — never commit values. After first deploy:
+  //   npx wrangler secret put PRESCOPE_SUBMIT_WORKER_URL
+  //   npx wrangler secret put PRESCOPE_SUBMIT_SECRET
+  // Optional: npx wrangler secret put PSC_ASSESSOR_KEY
+  // Brand follow-up: runtime BRAND=acme + R2 BRAND_PACK or
+  // ASSETS /brand-overlay/<id>/. Do not put a customer id or logo here.
+  // Admin deploy-only demo (now): NEXT_PUBLIC_BRAND_* at build time + a
+  // gitignored file under public/brand/. See docs/cloudflare/intake.md.
+  // Optional R2 (uncomment after the bucket exists — a missing bucket fails deploy):
+  // "r2_buckets": [{ "binding": "BRAND_PACK", "bucket_name": "prescope-brand-pack" }]
+}

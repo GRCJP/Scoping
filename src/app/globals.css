@@ -1,0 +1,153 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background: #f8fafc;
+  color: #333333;
+  font-feature-settings: "ss01" on, "kern" on;
+}
+
+::selection {
+  background: #dfe6ef;
+  color: #021e47;
+}
+
+.prose-brief {
+  font-size: 0.925rem;
+  line-height: 1.65;
+  color: #333333;
+}
+.prose-brief h1 {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #060521;
+  margin: 0 0 0.75rem;
+}
+.prose-brief h2 {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 1.75rem 0 0.5rem;
+  color: #060521;
+}
+.prose-brief p {
+  margin: 0.4rem 0;
+}
+.prose-brief ul {
+  list-style: disc;
+  padding-left: 1.2rem;
+  margin: 0.4rem 0;
+}
+.prose-brief table {
+  width: 100%;
+  font-size: 0.85rem;
+  border-collapse: collapse;
+  margin: 0.6rem 0 1rem;
+}
+.prose-brief th,
+.prose-brief td {
+  border: 1px solid #e5e7eb;
+  padding: 0.35rem 0.55rem;
+  text-align: left;
+  vertical-align: top;
+}
+.prose-brief code,
+.prose-brief pre {
+  font-size: 0.8rem;
+}
+.prose-brief hr {
+  border: 0;
+  border-top: 1px solid #e5e7eb;
+  margin: 1.25rem 0;
+}
+
+/* Solid navy for assessor chrome. Intake wash is .intake-dark only. */
+.navy-hero {
+  background-color: #12366c;
+}
+.navy-chrome,
+.circuit-chrome {
+  background-color: #021e47;
+}
+
+@keyframes intro-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.intro-beat {
+  opacity: 0;
+  animation: intro-in 0.55s ease forwards;
+}
+.intro-d1 {
+  animation-delay: 0.05s;
+}
+.intro-d2 {
+  animation-delay: 0.4s;
+}
+.intro-d3 {
+  animation-delay: 0.75s;
+}
+.intro-d3b {
+  animation-delay: 0.95s;
+}
+.intro-d4 {
+  animation-delay: 1.35s;
+}
+
+/* OSC intake — navy wash + faint circuit grid. No neon, no company art. */
+.intake-dark {
+  background-color: #021e47;
+  background-attachment: fixed;
+  background-image:
+    linear-gradient(rgba(18, 54, 108, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(18, 54, 108, 0.22) 1px, transparent 1px);
+  background-size: 40px 40px, 40px 40px;
+  color: #ffffff;
+}
+
+.intake-welcome-glow {
+  background-image: radial-gradient(ellipse 90% 55% at 50% 0%, rgba(251, 191, 36, 0.14), transparent 62%);
+}
+.intake-dark input,
+.intake-dark textarea {
+  background-color: #ffffff;
+  color: #021e47;
+}
+.intake-dark input::placeholder,
+.intake-dark textarea::placeholder {
+  color: rgba(2, 30, 71, 0.4);
+}
+
+.prose-on-navy .prose-brief {
+  color: #ffffff;
+}
+.prose-on-navy .prose-brief h1,
+.prose-on-navy .prose-brief h2 {
+  color: #ffffff;
+}
+.prose-on-navy .prose-brief th,
+.prose-on-navy .prose-brief td {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+.prose-on-navy .prose-brief hr {
+  border-top-color: rgba(255, 255, 255, 0.15);
+}

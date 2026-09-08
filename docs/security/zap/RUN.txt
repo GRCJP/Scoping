@@ -1,0 +1,14 @@
+Scoping Track B — ZAP Baseline
+started: 2026-09-05T16:26:56Z
+finished: 2026-09-05T16:27:09Z
+target: https://prescope-intake.example.workers.dev/intake
+origin: https://prescope-intake.example.workers.dev
+spider_mins: 2
+light_ajax: 0
+urls_found: 38
+constraints: no active scan; no form POST; no submit secret probe; assessor APIs out of scope
+docker: not available on this host — falling back to official Linux package
+engine: local /workspace/.zap-runtime/ZAP_2.17.0/zap.sh (openjdk version "21.0.10" 2026-01-20)
+engine_used: local-linux
+reports: docs/security/zap/zap-baseline-report.html + .json
+summary: 0 High, 0 Medium, 4 Low, 2 Informational

@@ -1,0 +1,50 @@
+{
+  "name": "prescope",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Scoping · OSC Discovery — white-label C3PAO environment intake. No real Box, no credentials, no CUI.",
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1 --port 43127",
+    "build": "next build",
+    "start": "next start --hostname 127.0.0.1 --port 43127",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
+    "prepare-brand": "node --experimental-strip-types scripts/prepare-brand-overlay.ts",
+    "attach-brand-assets": "node --experimental-strip-types scripts/attach-brand-assets.ts",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv --include-runtime false cloudflare-env.d.ts",
+    "emass:fill": "node --experimental-strip-types scripts/fill-emass.ts",
+    "worker:dev": "npm run dev --prefix workers/prescope-submit",
+    "worker:test": "npm test --prefix workers/prescope-submit",
+    "zap:baseline": "bash scripts/zap-baseline.sh",
+    "zap:observe-submit": "bash scripts/zap-observe-submit.sh",
+    "test": "node --experimental-strip-types --test src/lib/brand.test.ts src/lib/brand-icon.test.ts src/lib/beats.test.ts src/lib/copy.test.ts src/lib/load-brand.test.ts src/lib/brand-overlay-pack.test.ts src/lib/answers.test.ts src/lib/normalize-answers.test.ts src/lib/validate.test.ts src/lib/parse-address.test.ts src/lib/ids.test.ts src/lib/assessor-auth.test.ts src/lib/security-headers.test.ts src/lib/submission-read.test.ts src/middleware.test.ts src/lib/demo-fill.test.ts src/lib/intake-session.test.ts src/lib/emass.test.ts src/lib/emass-xlsx.test.ts src/lib/prescope-submit-worker.test.ts workers/prescope-submit/test/auth.test.ts workers/prescope-submit/test/validate.test.ts workers/prescope-submit/test/box.test.ts workers/prescope-submit/test/submit.test.ts workers/prescope-submit/test/mail.test.ts workers/prescope-submit/test/fill.test.ts workers/prescope-submit/test/container.test.ts"
+  },
+  "dependencies": {
+    "@opennextjs/cloudflare": "^1.20.6",
+    "@radix-ui/react-checkbox": "^1.3.2",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-progress": "^1.1.7",
+    "@radix-ui/react-radio-group": "^1.3.7",
+    "@radix-ui/react-separator": "^1.1.7",
+    "@radix-ui/react-slot": "^1.2.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "exceljs": "^4.4.0",
+    "lucide-react": "^0.511.0",
+    "next": "^15.4.6",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "tailwind-merge": "^2.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "@types/react": "^19.1.9",
+    "@types/react-dom": "^19.1.7",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.8.3",
+    "wrangler": "^4.129.0"
+  }
+}

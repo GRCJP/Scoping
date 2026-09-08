@@ -1,0 +1,114 @@
+{
+  "generated_at": "2026-09-05T16:27:09Z",
+  "scope": "HEADER/TLS/CORS observation only. No secret guessing. No authenticated POST flood.",
+  "origin": "https://prescope-submit.example.workers.dev",
+  "fetches": {
+    "root": {
+      "method": "GET",
+      "url": "https://prescope-submit.example.workers.dev/",
+      "status": 200,
+      "headers_of_interest": {
+        "strict-transport-security": null,
+        "content-security-policy": null,
+        "access-control-allow-origin": null,
+        "access-control-allow-headers": null,
+        "access-control-allow-methods": null,
+        "access-control-allow-credentials": null,
+        "cache-control": "no-store, private",
+        "pragma": "no-cache",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "no-referrer",
+        "content-type": "application/json; charset=utf-8",
+        "server": "cloudflare"
+      },
+      "body_snippet": "{\"ok\":true,\"service\":\"prescope-submit\"}"
+    },
+    "health": {
+      "method": "GET",
+      "url": "https://prescope-submit.example.workers.dev/health",
+      "status": 200,
+      "headers_of_interest": {
+        "strict-transport-security": null,
+        "content-security-policy": null,
+        "access-control-allow-origin": null,
+        "access-control-allow-headers": null,
+        "access-control-allow-methods": null,
+        "access-control-allow-credentials": null,
+        "cache-control": "no-store, private",
+        "pragma": "no-cache",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "no-referrer",
+        "content-type": "application/json; charset=utf-8",
+        "server": "cloudflare"
+      },
+      "body_snippet": "{\"ok\":true,\"service\":\"prescope-submit\"}"
+    },
+    "options_submit": {
+      "method": "OPTIONS",
+      "url": "https://prescope-submit.example.workers.dev/submit",
+      "status": 404,
+      "headers_of_interest": {
+        "strict-transport-security": null,
+        "content-security-policy": null,
+        "access-control-allow-origin": null,
+        "access-control-allow-headers": null,
+        "access-control-allow-methods": null,
+        "access-control-allow-credentials": null,
+        "cache-control": "no-store, private",
+        "pragma": "no-cache",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "no-referrer",
+        "content-type": "application/json; charset=utf-8",
+        "server": "cloudflare"
+      },
+      "body_snippet": "{\"error\":\"Not found.\"}"
+    },
+    "options_cross": {
+      "method": "OPTIONS",
+      "url": "https://prescope-submit.example.workers.dev/submit",
+      "status": 404,
+      "headers_of_interest": {
+        "strict-transport-security": null,
+        "content-security-policy": null,
+        "access-control-allow-origin": null,
+        "access-control-allow-headers": null,
+        "access-control-allow-methods": null,
+        "access-control-allow-credentials": null,
+        "cache-control": "no-store, private",
+        "pragma": "no-cache",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "no-referrer",
+        "content-type": "application/json; charset=utf-8",
+        "server": "cloudflare"
+      },
+      "body_snippet": "{\"error\":\"Not found.\"}"
+    },
+    "get_submit": {
+      "method": "GET",
+      "url": "https://prescope-submit.example.workers.dev/submit",
+      "status": 404,
+      "headers_of_interest": {
+        "strict-transport-security": null,
+        "content-security-policy": null,
+        "access-control-allow-origin": null,
+        "access-control-allow-headers": null,
+        "access-control-allow-methods": null,
+        "access-control-allow-credentials": null,
+        "cache-control": "no-store, private",
+        "pragma": "no-cache",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "no-referrer",
+        "content-type": "application/json; charset=utf-8",
+        "server": "cloudflare"
+      },
+      "body_snippet": "{\"error\":\"Not found.\"}"
+    }
+  },
+  "tls_brief": "CONNECTION ESTABLISHED\nProtocol version: TLSv1.3\nCiphersuite: TLS_AES_256_GCM_SHA384\nPeer certificate: CN = example.workers.dev\nHash used: SHA256\nSignature type: ECDSA\nVerification: OK\nServer Temp Key: X25519, 253 bits\nDONE",
+  "tls_cert": "issuer=C = US, O = Google Trust Services, CN = WE1\nsubject=CN = example.workers.dev\nnotBefore=Sep  4 19:38:59 2026 GMT\nnotAfter=Dec  3 20:36:16 2026 GMT\nX509v3 Subject Alternative Name: \n    DNS:example.workers.dev, DNS:*.example.workers.dev"
+}

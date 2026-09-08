@@ -1,0 +1,12 @@
+---
+description: Company marks live in org-logos; never commit logos.
+alwaysApply: true
+---
+
+# Org logos
+
+Company marks live in `org-logos/<id>/` (`brand.json` + `logo.png` or `.svg`). `brands/<id>/` is a fallback.
+
+- Never commit customer logos or any PNG/SVG wordmark.
+- When asked to use a company logo, read `org-logos/<id>/` (prompt: `Use the Acme logo from org-logos/acme.` or `Use logo <id> located in the project org-logos section.`).
+- Activate with `BRAND=<id>` in `.env.local`. Missing pack → Scoping. Do not throw.

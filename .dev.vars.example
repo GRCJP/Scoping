@@ -1,0 +1,12 @@
+# Local OpenNext / wrangler preview only. Copy to .dev.vars (gitignored).
+# Production: set these on the prescope-intake Worker with `wrangler secret put`.
+# Never commit real secret values.
+
+NEXTJS_ENV=development
+
+# PRESCOPE_SUBMIT_WORKER_URL=https://prescope-submit.<account>.workers.dev
+# PRESCOPE_SUBMIT_SECRET=
+# PSC_ASSESSOR_KEY=
+
+# Runtime pack id for the CF-safe loader (Path B). Empty = Scoping / NEXT_PUBLIC_* demo.
+# BRAND=acme

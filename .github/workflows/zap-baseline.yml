@@ -1,0 +1,42 @@
+# Authorized Track B DAST. Manual only — do not run on every PR.
+# Spider + passive (ZAP Baseline). No active scan, no secret brute-force.
+name: zap-baseline
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Authorized intake URL (the operator's Track B host)
+        required: true
+        default: https://prescope-intake.example.workers.dev/intake
+      light:
+        description: Extra light spider after baseline (still no active scan)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  zap-baseline:
+    name: ZAP Baseline (authorized Track B)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: ZAP Baseline
+        env:
+          ZAP_TARGET: ${{ inputs.target }}
+          ZAP_LIGHT: ${{ inputs.light && '1' || '0' }}
+          ZAP_SPIDER_MINS: "2"
+        run: bash scripts/zap-baseline.sh
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-baseline-prescope-track-b
+          path: docs/security/zap/
+          if-no-files-found: warn

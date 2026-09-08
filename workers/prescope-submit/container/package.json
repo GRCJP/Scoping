@@ -1,0 +1,10 @@
+{
+  "name": "prescope-fill",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Node fill sidecar. Same fillEmassXlsxPack mapper as the Worker node path. No second spreadsheet map.",
+  "dependencies": {
+    "exceljs": "^4.4.0"
+  }
+}

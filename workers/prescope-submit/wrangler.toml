@@ -1,0 +1,109 @@
+# Submit Worker (technical service name: prescope-submit — keep as-is).
+# Placeholders only — never put secrets here.
+# Secrets: wrangler secret put …  or copy .dev.vars.example → .dev.vars (gitignored).
+#
+# compatibility_date ≥ 2026-08-04 enables Node.js compat by default (Buffer, streams)
+# so exceljs can fill workbooks when FILL_MODE=node. See docs/cloudflare/README.md.
+
+name = "prescope-submit"
+main = "src/index.ts"
+compatibility_date = "2026-09-04"
+
+# Blank UNCLASSIFIED templates from docs/emass/ (same files the Next fill uses).
+# workerd cannot read the host filesystem; bundle them for wrangler dev / deploy.
+[[rules]]
+type = "Data"
+globs = ["**/*.xlsx"]
+fallthrough = true
+
+# Public / non-secret config. Folder IDs are not credentials; treat them as environment-specific.
+[vars]
+# mock | live — CI and wrangler dev default to mock (no Box network).
+BOX_MODE = "mock"
+# node | skip | container — container POSTs answers to the fill sidecar / PRESCOPE_FILL
+# (exceljs off the Worker isolate). Track B live default is container so a #46-only
+# redeploy from main cannot wipe FILL_MODE back to node.
+# Local wrangler dev: override to node in .dev.vars (see .dev.vars.example) so Docker
+# is not required. Tests set FILL_MODE themselves.
+FILL_MODE = "container"
+# ccg | jwt — CCG is implemented. JWT env names are reserved; see README.
+BOX_AUTH_MODE = "ccg"
+BOX_SUBJECT_TYPE = "enterprise"
+# Box folder that receives empty DROPs (former psc_BoxDropsParentId).
+BOX_DROPS_PARENT_ID = ""
+# TEMPLATE parent. Set the live folder id in the Cloudflare dashboard /
+# wrangler vars — do not commit production-only ids (example placeholder: 000000000000).
+BOX_TEMPLATE_FOLDER_ID = ""
+# Explicit blank-template file ids (preferred over folder name lookup).
+BOX_PREASSESSMENT_TEMPLATE_FILE_ID = ""
+BOX_REQUIRED_DATA_TEMPLATE_FILE_ID = ""
+# Required for live Assessment Results. File id of the official CMMC L2 AR v3.9 blank
+# (CMMC_Level2_AssessmentResults_Template, ~163KB) in your Templates folder.
+# Must have Assessment / Requirements / Requirement Objectives / OSC SSP(s) — not Cover.
+# Live skips Assessment Results rather than upload a stub.
+BOX_ASSESSMENT_RESULTS_TEMPLATE_FILE_ID = ""
+# stub (default, CI/tests) | resend (Track B live send)
+MAIL_PROVIDER = "stub"
+# Published Resend template alias (or UUID) for customer_confirmation only.
+# Not a secret. Override in the dashboard if Admin 2 publishes a different id.
+MAIL_CUSTOMER_TEMPLATE_ID = "intake-submission-confirmation"
+# Repo root for local wrangler dev filesystem templates. Empty in production (use Box).
+EMASS_TEMPLATE_ROOT = ""
+# HTTP sidecar origin when FILL_MODE=container and PRESCOPE_FILL is not bound.
+# Stay empty in git — never commit a trycloudflare / ephemeral hostname.
+# Admin sets FILL_CONTAINER_URL in the Cloudflare dashboard or at deploy time.
+# wrangler deploy applies [vars] as written; an empty string here can blank a
+# dashboard URL. Prefer keeping the live URL:
+#   npx wrangler deploy --var FILL_CONTAINER_URL:https://<sidecar-origin>
+# or re-set FILL_CONTAINER_URL in the dashboard after a code-only deploy if it
+# is empty. Leave empty when the PRESCOPE_FILL Durable Object is bound.
+FILL_CONTAINER_URL = ""
+# Workbooks filled at once (1–3). Default 1 so one submit does not spike CPU (Worker 503).
+# Do not run parallel Admin smokes even at 1 — serial submits only.
+FILL_CONCURRENCY = "1"
+
+# Secrets (NOT listed under [vars] — use `wrangler secret put` or .dev.vars):
+#   PRESCOPE_SUBMIT_SECRET
+#   BOX_CLIENT_ID
+#   BOX_CLIENT_SECRET
+#   BOX_ENTERPRISE_ID
+#   BOX_JWT_PRIVATE_KEY          (reserved)
+#   BOX_JWT_PASSPHRASE           (reserved)
+#   BOX_JWT_PUBLIC_KEY_ID        (reserved)
+#   MAIL_FROM                    (Resend From:; wrangler secret put)
+#   MAIL_API_KEY                 (Resend API key; wrangler secret put)
+#   ASSESSOR_MAILBOX             (internal_box_link To:; comma- or semicolon-separated; wrangler secret put)
+
+# Local wrangler dev: override FILL_MODE=node via .dev.vars. Containers stay off
+# so Docker is not required for local node fill.
+[dev]
+enable_containers = false
+
+# --- Admin: FILL_MODE=container (uncomment this whole block, then wrangler deploy) ---
+# Docker must be running. Build context is the repo root (src/lib + docs/emass).
+# Paid Workers alone does not move exceljs off the isolate — Containers (or a
+# Node sidecar) is the architecture fix. Paid still helps the orchestrator CPU.
+#
+# Durable Object class/binding names below are deploy identifiers — keep as-is.
+# [[containers]]
+# class_name = "PrescopeFill"
+# image = "./container/Dockerfile"
+# image_build_context = "../.."
+# instance_type = "basic"
+# max_instances = 2
+#
+# [[durable_objects.bindings]]
+# name = "PRESCOPE_FILL"
+# class_name = "PrescopeFill"
+#
+# [[migrations]]
+# tag = "v1-prescope-fill"
+# new_sqlite_classes = [ "PrescopeFill" ]
+#
+# [vars] already commits FILL_MODE=container. Keep FILL_CONTAINER_URL empty when
+# the binding is used (sidecar URL only if no DO). FILL_CONCURRENCY stays "1".
+# Do not put a trycloudflare hostname in this file.
+# Same secret as the Worker: wrangler secret put PRESCOPE_SUBMIT_SECRET
+# Official Assessment Results blank: set BOX_ASSESSMENT_RESULTS_TEMPLATE_FILE_ID
+# (Worker downloads bytes and POSTs them to /fill — do not invent a second map).
+# See docs/cloudflare/README.md § exceljs / Containers.

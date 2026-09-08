@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80" width="300" height="80" role="img" aria-label="Scoping">
+  <circle cx="40" cy="40" r="18" fill="none" stroke="#FBBF24" stroke-width="2.5"/>
+  <circle cx="40" cy="40" r="4.2" fill="#FBBF24"/>
+  <path d="M40 16v8M40 56v8M16 40h8M56 40h8" stroke="#FBBF24" stroke-width="2" stroke-linecap="round"/>
+  <text x="78" y="52" fill="#FFFFFF" font-family="Barlow, Public Sans, system-ui, sans-serif" font-size="36" font-weight="600">Scoping</text>
+</svg>

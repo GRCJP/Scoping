@@ -1,0 +1,41 @@
+# Copy to .dev.vars (gitignored). Never commit real values.
+# Production: `wrangler secret put NAME` in the target Cloudflare account.
+
+# Shared secret. Intake / curl must send:
+#   Authorization: Bearer <this>
+#   or X-Prescope-Fill-Key: <this>
+PRESCOPE_SUBMIT_SECRET=dev-only-change-me
+
+# Box CCG (Client Credentials Grant). Leave blank when BOX_MODE=mock.
+BOX_CLIENT_ID=
+BOX_CLIENT_SECRET=
+BOX_ENTERPRISE_ID=
+
+# JWT / service-account (reserved — CCG is the implemented path).
+BOX_JWT_PRIVATE_KEY=
+BOX_JWT_PASSPHRASE=
+BOX_JWT_PUBLIC_KEY_ID=
+
+# Mail. MAIL_PROVIDER=stub (committed default) records hooks and does not send.
+# MAIL_PROVIDER=resend POSTs to https://api.resend.com/emails. Never attach xlsx.
+# customer_confirmation uses Resend template alias intake-submission-confirmation
+# (MAIL_CUSTOMER_TEMPLATE_ID in wrangler.toml [vars]; not a secret).
+# Production: wrangler secret put MAIL_API_KEY, MAIL_FROM, ASSESSOR_MAILBOX
+# ASSESSOR_MAILBOX may be comma- or semicolon-separated (internal_box_link To:).
+MAIL_FROM=
+MAIL_API_KEY=
+ASSESSOR_MAILBOX=assessors@example.com
+
+# Local fill: repo root so node:fs can read docs/emass/*.xlsx during `wrangler dev`.
+# Production Worker should leave this empty and pull blanks from Box file ids.
+EMASS_TEMPLATE_ROOT=
+
+# Optional. wrangler.toml already sets FILL_CONCURRENCY=1. Do not run parallel Admin smokes.
+
+# Track B live wrangler.toml default is FILL_MODE=container. Override to node
+# for local wrangler dev so Docker / a sidecar is not required.
+FILL_MODE=node
+# To exercise the HTTP sidecar locally:
+# FILL_MODE=container
+# FILL_CONTAINER_URL=http://127.0.0.1:8788
+# PRESCOPE_SUBMIT_SECRET must match the sidecar. Never commit a trycloudflare hostname.

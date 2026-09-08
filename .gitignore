@@ -1,0 +1,47 @@
+.next
+node_modules
+out
+.DS_Store
+*.log
+.env
+.env.local
+.env.*.local
+
+# OpenNext / Wrangler (intake Worker). Never commit secrets.
+.open-next
+.wrangler
+.dev.vars*
+!.dev.vars.example
+cloudflare-env.d.ts
+
+*.tsbuildinfo
+tmp/
+.pre-claude-backup/
+.font-stub-backup-*
+
+# Local company brand packs — never commit customer logos
+brands/*
+!brands/README.md
+!brands/.gitkeep
+
+# Canonical local packs — never commit logos
+org-logos/*
+!org-logos/README.md
+!org-logos/.gitkeep
+
+# Deploy-only overlay copied from org-logos/ (optional ASSETS attach)
+public/brand-overlay/
+
+# Official CAC Assessment Results blank is not committed. A file at this
+# name has been the Cover stub — never treat it as official v3.9.
+docs/emass/CMMC_Level2_AssessmentResults_Template.xlsx
+
+# Extra files dropped next to the committed Scoping mark (Admin demo). Never commit customer art.
+public/brand/*
+!public/brand/mark.svg
+
+# Local OWASP ZAP runtime (official Linux tarball / extracted tree). Never commit.
+.zap-runtime/
+
+__pycache__/
+*.pyc

@@ -1,0 +1,117 @@
+/* Scoping · OSC Discovery — portable intake chrome.
+   Drop this on Power Pages (or any host). Load Barlow + Public Sans first.
+   Do not restyle tokens to match a logo. */
+
+:root {
+  --psc-navy: #021e47;
+  --psc-navy-mid: #12366c;
+  --psc-gold: #fbbf24;
+  --psc-gold-hover: #d97706;
+  --psc-white: #ffffff;
+  --psc-ink: #021e47;
+  --psc-error: #fca5a5;
+  --psc-hairline: rgba(255, 255, 255, 0.1);
+  --psc-placeholder: rgba(2, 30, 71, 0.4);
+  --psc-display: "Barlow", system-ui, sans-serif;
+  --psc-sans: "Public Sans", system-ui, sans-serif;
+}
+
+.psc-intake,
+.psc-intake * { box-sizing: border-box; }
+
+.psc-intake {
+  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--psc-navy);
+  color: var(--psc-white);
+  font-family: var(--psc-sans);
+  font-feature-settings: "ss01" on, "kern" on;
+  -webkit-font-smoothing: antialiased;
+}
+
+.psc-intake a { color: inherit; }
+
+.psc-chrome { flex: 0 0 auto; background: var(--psc-navy); }
+.psc-chrome-row { display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 1.5rem 1.5rem 1rem; }
+.psc-mark { display: inline-flex; align-items: center; background: var(--psc-navy); padding: 0.375rem 0.5rem; }
+.psc-mark img { height: 64px; width: auto; display: block; }
+.psc-time { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 1.125rem; font-weight: 500; color: var(--psc-white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.psc-steps { display: flex; justify-content: center; flex-wrap: nowrap; overflow-x: auto; gap: 0.25rem; margin: 0; padding: 0.5rem 1.25rem; list-style: none; }
+.psc-step { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 0.375rem; min-height: 1.75rem; padding: 0.25rem 0.625rem; border: 1px solid transparent; border-radius: 999px; background: transparent; color: var(--psc-white); font-family: inherit; font-size: 0.875rem; font-weight: 400; white-space: nowrap; cursor: default; }
+.psc-step[aria-current="step"] { background: var(--psc-gold); border-color: var(--psc-gold); color: var(--psc-navy); font-weight: 600; }
+.psc-step.is-done { font-weight: 500; cursor: pointer; }
+
+.psc-eyebrow { max-width: 40rem; margin: 0 auto; padding: 0.5rem 1.25rem 0; font-size: 0.875rem; color: var(--psc-white); }
+.psc-title { max-width: 40rem; margin: 0.375rem auto 0; padding: 0 1.25rem; font-family: var(--psc-display); font-size: 1.5rem; font-weight: 600; line-height: 1.2; color: var(--psc-white); }
+.psc-blurb { max-width: 40rem; margin: 0.375rem auto 0; padding: 0 1.25rem 0.5rem; font-size: 1rem; line-height: 1.55; color: var(--psc-white); }
+
+.psc-well { flex: 1 1 auto; min-height: 0; overflow-y: auto; background: var(--psc-navy); }
+.psc-well-inner { width: 100%; max-width: 40rem; margin: 0 auto; padding: 1.25rem; }
+.psc-well-inner > * + * { margin-top: 1.5rem; }
+
+.psc-label { display: flex; align-items: center; flex-wrap: wrap; gap: 0.375rem; margin: 0 0 0.375rem; font-size: 1rem; font-weight: 500; color: var(--psc-white); }
+.psc-hint { margin: 0 0 0.375rem; font-size: 13px; line-height: 1.5; color: var(--psc-white); }
+.psc-error { margin: 0.25rem 0 0; font-size: 0.75rem; color: var(--psc-error); }
+
+.psc-input,
+.psc-select,
+.psc-textarea { display: block; width: 100%; height: 2.75rem; padding: 0 0.75rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; background: var(--psc-white); color: var(--psc-ink); font-family: inherit; font-size: 1rem; }
+.psc-textarea { height: auto; min-height: 7rem; padding: 0.625rem 0.75rem; resize: vertical; }
+.psc-input::placeholder,
+.psc-textarea::placeholder { color: var(--psc-placeholder); }
+
+.psc-pills { display: flex; flex-wrap: wrap; gap: 0.625rem; }
+.psc-pill { min-height: 2.5rem; padding: 0 0.875rem; border: 1px solid var(--psc-white); border-radius: 999px; background: transparent; color: var(--psc-white); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer; }
+.psc-pills[data-count="2"] .psc-pill,
+.psc-pills[data-count="3"] .psc-pill,
+.psc-pills[data-count="4"] .psc-pill { flex: 1 1 0; }
+.psc-pill[aria-pressed="true"],
+.psc-pill.is-on { background: var(--psc-gold); border-color: var(--psc-gold); color: var(--psc-navy); }
+
+.psc-stack { overflow: hidden; border: 1px solid #e5e7eb; border-radius: 0.5rem; background: var(--psc-white); color: var(--psc-ink); }
+.psc-stack-row { display: flex; align-items: center; gap: 0.625rem; min-height: 2.5rem; padding: 0 0.75rem; border-bottom: 1px solid #e5e7eb; font-size: 15px; cursor: pointer; }
+.psc-stack-row.is-on { background: rgba(251, 191, 36, 0.15); }
+
+.psc-reveal[hidden],
+.psc-reveal.is-closed { display: block; visibility: hidden; pointer-events: none; }
+
+.psc-footer { flex: 0 0 auto; z-index: 20; border-top: 1px solid var(--psc-hairline); background: var(--psc-navy); }
+.psc-footer-row { max-width: 40rem; margin: 0 auto; padding: 0.75rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.psc-disclaimer { max-width: 40rem; margin: 0 auto; padding: 0 1.25rem 0.75rem; font-size: 11px; color: rgba(255, 255, 255, 0.9); }
+
+.psc-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-width: 9.5rem; height: 3rem; padding: 0 1.5rem; border: 0; border-radius: 0.375rem; background: var(--psc-gold); color: var(--psc-navy); font-family: inherit; font-size: 1rem; font-weight: 600; cursor: pointer; }
+.psc-btn:hover { background: var(--psc-gold-hover); color: var(--psc-white); }
+.psc-btn-ghost { min-width: 0; height: 2.5rem; background: transparent; color: var(--psc-white); font-weight: 500; }
+
+.psc-intro { max-width: 48rem; margin: 0 auto; padding: 2.5rem 1.25rem; text-align: center; }
+.psc-intro-kicker { margin: 0; font-size: 0.875rem; color: var(--psc-white); }
+.psc-intro h1 { margin: 0; font-family: var(--psc-display); font-size: clamp(2.75rem, 6vw, 3.75rem); font-weight: 600; line-height: 1.1; color: var(--psc-white); text-align: center; }
+.psc-welcome-lead { margin: 2.5rem 0 0; font-size: 1.5rem; line-height: 1.55; color: var(--psc-white); text-align: center; }
+.psc-welcome-cards { list-style: none; margin: 2.5rem 0 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 1rem; }
+@media (min-width: 768px) {
+  .psc-welcome-cards { grid-template-columns: repeat(3, 1fr); }
+}
+.psc-welcome-cards li { background: #12366C; border: 1px solid rgba(251, 191, 36, 0.45); border-radius: 0.5rem; padding: 1.25rem; text-align: left; }
+.psc-welcome-cards .t { margin: 0; font-size: 18px; font-weight: 500; color: #fff; }
+.psc-welcome-cards .b { margin: 0.5rem 0 0; font-size: 16px; line-height: 1.5; color: #fff; }
+.psc-intro-warn { margin-top: 1.5rem !important; font-weight: 600; color: var(--psc-gold) !important; }
+.psc-intro-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 1rem; margin-top: 2.5rem; }
+.psc-intro-actions .psc-btn { height: 3.5rem; }
+.psc-welcome-caption { margin: 0.75rem 0 0; font-size: 0.875rem; line-height: 1.4; color: #fff; }
+
+.psc-intake input[type="text"],
+.psc-intake input[type="email"],
+.psc-intake input[type="tel"],
+.psc-intake textarea,
+.psc-intake select {
+  height: 2.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background: var(--psc-white);
+  color: var(--psc-ink);
+  font-size: 1rem;
+}
