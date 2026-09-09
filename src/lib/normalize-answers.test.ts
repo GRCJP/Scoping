@@ -21,7 +21,7 @@ function goodAnswers(): FormAnswers {
     hlocage: "1H9QX",
     cageinscope: "1H9QX",
     scopemode: "Enclave",
-    scopedesc: "GCC High tenant plus locked-down CAD workstations.",
+    scopedesc: "GCC High plus locked-down CAD workstations.",
     ao_last: "Chen",
     ao_first: "Maya",
     ao_title: "Contracts manager",
@@ -140,6 +140,10 @@ describe("submit validation (PSC-03)", () => {
 
   it("rejects oversized strings, object-shaped arrays, and incomplete forms", () => {
     assert.equal(normalizeAnswers({ ...goodAnswers(), hqname: "A".repeat(201) }).ok, false);
+    assert.equal(normalizeAnswers({ ...goodAnswers(), cui_locations_note: "N".repeat(101) }).ok, false);
+    assert.equal(normalizeAnswers({ ...goodAnswers(), other_sites: "S".repeat(101) }).ok, false);
+    assert.equal(normalizeAnswers({ ...goodAnswers(), enclave_what: "E".repeat(101) }).ok, false);
+    assert.equal(normalizeAnswers({ ...goodAnswers(), scopedesc: "D".repeat(101) }).ok, false);
     assert.equal(normalizeAnswers({ ...goodAnswers(), sps: { 0: goodAnswers().sps[0] } }).ok, false);
 
     const raw = emptyAnswers();

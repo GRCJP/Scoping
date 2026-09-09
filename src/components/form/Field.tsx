@@ -10,6 +10,7 @@ import { InfoTip } from "@/components/form/InfoTip";
 export function Field({
   label,
   hint,
+  notice,
   error,
   children,
   required,
@@ -19,6 +20,7 @@ export function Field({
 }: {
   label: string;
   hint?: string;
+  notice?: string;
   error?: string;
   required?: boolean;
   tip?: string;
@@ -40,6 +42,11 @@ export function Field({
         {tip ? <InfoTip label={label}>{tip}</InfoTip> : null}
       </Label>
       {hint ? <p className="text-white leading-relaxed" style={{ fontSize: 16 }}>{hint}</p> : null}
+      {notice ? (
+        <p className="leading-relaxed" role="note" style={{ color: "#FBBF24", fontSize: 14 }}>
+          {notice}
+        </p>
+      ) : null}
       {children}
       {error ? <p className="text-[#FCA5A5] leading-relaxed" style={{ fontSize: 14 }}>{error}</p> : null}
     </div>
@@ -49,6 +56,7 @@ export function Field({
 type FieldBits = {
   label: string;
   hint?: string;
+  notice?: string;
   error?: string;
   required?: boolean;
   tip?: string;
@@ -58,6 +66,7 @@ type FieldBits = {
 export function TextField({
   label,
   hint,
+  notice,
   error,
   required,
   tip,
@@ -81,7 +90,7 @@ export function TextField({
   spellCheck?: boolean;
 }) {
   return (
-    <Field label={label} hint={hint} error={error} required={required} tip={tip} fieldKey={fieldKey}>
+    <Field label={label} hint={hint} notice={notice} error={error} required={required} tip={tip} fieldKey={fieldKey}>
       <Input
         type={type}
         value={value}

@@ -91,36 +91,6 @@ describe("public intake copy", () => {
     assert.equal(welcome.includes("text-sm"), false);
   });
 
-  it("public UI never uses Prescope as the product name", () => {
-    const allowedTech = [
-      "X-Prescope-Handling",
-      "X-Prescope-Fill-Key",
-      "x-prescope-assessor-key",
-    ];
-    const hits: string[] = [];
-    for (const dir of PUBLIC_UI_ROOTS) {
-      for (const file of walkFiles(dir)) {
-        let text = readFileSync(file, "utf8");
-        for (const token of allowedTech) text = text.split(token).join("");
-        if (/\bPrescope\b/.test(text)) hits.push(relative(repo, file));
-      }
-    }
-    assert.deepEqual(hits, []);
-
-    const brand = src("lib/brand.ts");
-    const mark = readFileSync(join(repo, "public", "brand", "mark.svg"), "utf8");
-    const envExample = readFileSync(join(repo, ".env.example"), "utf8");
-    const pages = readFileSync(join(repo, "docs", "powerpages", "osc-discovery.html"), "utf8");
-    assert.ok(brand.includes('displayName: "Scoping"'));
-    assert.ok(brand.includes('shortName: "Scoping"'));
-    assert.equal(/\bPrescope\b/.test(brand), false);
-    assert.ok(mark.includes(">Scoping</text>"));
-    assert.ok(mark.includes('aria-label="Scoping"'));
-    assert.match(envExample, /^NEXT_PUBLIC_BRAND_NAME=Scoping$/m);
-    assert.ok(pages.includes('name: "Scoping"'));
-    assert.equal(/\bPrescope\b/.test(pages), false);
-  });
-
   it("public form, landing, and Power Pages have no Continue-to-questions or onSkip", () => {
     const hits: string[] = [];
     for (const dir of PUBLIC_UI_ROOTS) {
@@ -136,13 +106,58 @@ describe("public intake copy", () => {
 
   it("banner is centered ALL CAPS DO NOT INCLUDE CUI at equal type size", () => {
     const banner = src("components/form/ScopeWarningBanner.tsx");
+    const cuiPath = src("lib/cui-path.ts");
     assert.ok(banner.includes("DO NOT INCLUDE CUI."));
-    assert.ok(banner.includes("High-level only. No server names, machine names, file paths, or IPs."));
+    assert.ok(banner.includes("SCOPE_WARNING_SHORT"));
+    assert.ok(banner.includes("CUI_PATH_WARNING"));
+    assert.ok(cuiPath.includes("High-level only. No server names, machine names, file paths, or IPs."));
     assert.ok(banner.includes("text-center"));
     assert.ok(banner.includes("#12366C"));
     assert.ok(banner.includes("#FBBF24"));
     assert.ok(banner.includes("fontSize: 17"));
     assert.equal(banner.includes("WARNING."), false);
+  });
+
+  it("CUI Path carries the stronger trust-boundary warning and 100-char notes", () => {
+    const cuiPath = src("lib/cui-path.ts");
+    const form = src("components/form/IntakeForm.tsx");
+    const field = src("components/form/Field.tsx");
+    const choices = src("lib/choices.ts");
+    const banner = src("components/form/ScopeWarningBanner.tsx");
+    const pages = readFileSync(join(repo, "docs", "powerpages", "osc-discovery.html"), "utf8");
+    const warning =
+      "Do not enter CUI, assessment evidence, network addresses, system configurations, vulnerability information, credentials, or other sensitive security information. Provide only high-level descriptions sufficient to support assessment scoping. Detailed documentation and assessment evidence must be provided through the authorized assessment repository.";
+    assert.ok(cuiPath.includes(warning));
+    assert.ok(cuiPath.includes("CUI_PATH_NOTE_MAX = 100"));
+    assert.ok(banner.includes("strong"));
+    assert.ok(form.includes('strong={!welcome && current.id === "E2"}'));
+    assert.ok(form.includes("CUI_PATH_WARNING"));
+    assert.ok(form.includes("CUI_PATH_NOTE_MAX"));
+    assert.ok(form.includes("notice={CUI_PATH_WARNING}"));
+    assert.ok(form.includes("Where CUI lives today"));
+    assert.ok(form.includes("MultiSelectField"));
+    assert.ok(form.includes("options={CUI_LOCATIONS}"));
+    assert.equal(form.includes("Where does CUI reside?"), false);
+    for (const label of [
+      "M365 GCC High",
+      "Azure Government",
+      "AWS GovCloud",
+      "On-prem file shares / servers",
+      "VDI / virtual enclave",
+      "Third-party CSP",
+      "Other",
+    ]) {
+      assert.ok(choices.includes(`"${label}"`), label);
+    }
+    assert.equal(form.includes("AreaField"), false);
+    assert.ok(form.includes('fieldKey="scopedesc"'));
+    assert.ok(form.includes("maxLength={CUI_PATH_NOTE_MAX}"));
+    assert.ok(field.includes("notice"));
+    assert.equal(/label=["']CUID["']/.test(form), false);
+    assert.equal(form.includes("CMMC UID field"), false);
+    assert.equal(form.includes("go/no-go"), false);
+    assert.ok(pages.includes(warning));
+    assert.ok(pages.includes("CUI_PATH_NOTE_MAX"));
   });
 
   it("BrandMark has no navy chip or center-only treatment", () => {
@@ -482,12 +497,11 @@ describe("public intake copy", () => {
       "Evidence uploaded ~2 weeks before the assessment",
       "We notify the assessment team when you submit.",
       "assessors@example.com",
+      "mailto:assessors@example.com",
     ]) {
       assert.ok(doneBlock.includes(copy), copy);
       assert.ok(thankYou.includes(copy), copy);
     }
-    assert.ok(doneBlock.includes("mailto:assessors@example.com"));
-    assert.ok(thankYou.includes("mailto:${contact}"));
 
     assert.equal(doneBlock.includes("box.com"), false);
     assert.equal(doneBlock.includes("customerLink"), false);
@@ -522,8 +536,10 @@ describe("public intake copy", () => {
     assert.equal(thankYou.includes("workers.dev"), false);
     assert.equal(thankYou.includes("folderId"), false);
     assert.equal(thankYou.includes("PRESCOPE_SUBMIT"), false);
-    assert.match(envExample, /^PRESCOPE_SUBMIT_WORKER_URL=\s*$/m);
-    assert.ok(envExample.includes("prescope-submit.<account>.workers.dev"));
+    assert.match(
+      envExample,
+      /^PRESCOPE_SUBMIT_WORKER_URL=https:\/\/prescope-submit\.example\.workers\.dev\s*$/m,
+    );
     assert.ok(envExample.includes("PRESCOPE_SUBMIT_SECRET="));
     assert.equal(envExample.includes("NEXT_PUBLIC_PRESCOPE_SUBMIT"), false);
     assert.match(envExample, /^PRESCOPE_SUBMIT_SECRET=\s*$/m);

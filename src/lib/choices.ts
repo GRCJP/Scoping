@@ -47,6 +47,8 @@ export const CUI_LOCATIONS = [
   "AWS GovCloud",
   "On-prem file shares / servers",
   "Email (non-PreVeil)",
+  "VDI / virtual enclave",
+  "Third-party CSP",
   "Other",
   "N/A / not sure",
 ] as const;

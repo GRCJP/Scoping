@@ -4,6 +4,7 @@ import { beatsForStep } from "./beats.ts";
 import { harborlineOscAnswers } from "./demo-fill.ts";
 import { stepsForPath } from "./path.ts";
 import { emptyAnswers } from "./types.ts";
+import { CUI_PATH_NOTE_MAX, CUI_PATH_NOTE_TOO_LONG } from "./cui-path.ts";
 import {
   cageFieldError,
   companyCageErrors,
@@ -124,5 +125,63 @@ describe("CAGE format (HLO + in-scope)", () => {
     assert.equal(isValidCage(a.hlocage), true);
     assert.equal(isValidCageList(a.cageinscope), true);
     assert.equal(firstIncompleteGap(a, "standard", stepsForPath("standard"), beatsForStep), null);
+  });
+});
+
+describe("CUI Path note limits", () => {
+  it("rejects leftover CUI Path notes over 100 characters", () => {
+    const long = "X".repeat(CUI_PATH_NOTE_MAX + 1);
+    const a = {
+      ...harborlineOscAnswers(),
+      cui_locations: ["Other"],
+      cui_locations_note: long,
+      cui_host_fedramp: [{ host: "Other", fedramp: "N/A" as const, offering_name: "" }],
+      other_sites: long,
+      cui_off_hq: "Yes" as const,
+      env_mode: "Other named enclave" as const,
+      enclave_what: long,
+    };
+    const e = validateStep("E2", a, "standard");
+    assert.equal(e.cui_locations_note, CUI_PATH_NOTE_TOO_LONG);
+    assert.equal(e.other_sites, CUI_PATH_NOTE_TOO_LONG);
+    assert.equal(e.enclave_what, CUI_PATH_NOTE_TOO_LONG);
+  });
+
+  it("accepts CUI Path notes at the 100-character cap", () => {
+    const ok = "Y".repeat(CUI_PATH_NOTE_MAX);
+    const a = {
+      ...harborlineOscAnswers(),
+      cui_locations: ["Other"],
+      cui_locations_note: ok,
+      cui_host_fedramp: [{ host: "Other", fedramp: "N/A" as const, offering_name: "" }],
+      env_mode: "Other named enclave" as const,
+      enclave_what: ok,
+    };
+    const e = validateStep("E2", a, "standard");
+    assert.equal(e.cui_locations_note, undefined);
+    assert.equal(e.enclave_what, undefined);
+  });
+
+  it("rejects over-long enclave scope description and host offering names", () => {
+    const long = "X".repeat(CUI_PATH_NOTE_MAX + 1);
+    const p1 = validateStep(
+      "P1",
+      { ...harborlineOscAnswers(), scopemode: "Enclave" as const, scopedesc: long },
+      "standard",
+    );
+    assert.equal(p1.scopedesc, CUI_PATH_NOTE_TOO_LONG);
+
+    const e2 = validateStep(
+      "E2",
+      {
+        ...harborlineOscAnswers(),
+        cui_locations: ["M365 GCC High"],
+        cui_host_fedramp: [
+          { host: "M365 GCC High", fedramp: "FedRAMP Authorized" as const, offering_name: long },
+        ],
+      },
+      "standard",
+    );
+    assert.equal(e2["cui_host_fedramp:M365 GCC High:offering"], CUI_PATH_NOTE_TOO_LONG);
   });
 });

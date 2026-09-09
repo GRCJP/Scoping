@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Loader2, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddressIntake, type AddressFlush } from "@/components/form/AddressIntake";
-import { AreaField, ChoicePills, MultiSelectField, RevealSlot, TextField } from "@/components/form/Field";
+import { ChoicePills, MultiSelectField, RevealSlot, TextField } from "@/components/form/Field";
 import { InfoTip } from "@/components/form/InfoTip";
 import { WelcomeIntro } from "@/components/form/WelcomeIntro";
 import { ScopeWarningBanner } from "@/components/form/ScopeWarningBanner";
 import { remainingCopy, StepRail } from "@/components/form/StepRail";
 import { beatsForStep, clampBeatIndex, progressPercent, RECAP_JUMPS, reviewRailBeatIdx } from "@/lib/beats";
+import { CUI_PATH_NOTE_MAX, CUI_PATH_WARNING } from "@/lib/cui-path";
 import {
   CISA_SECTORS,
   CUI_LOCATIONS,
@@ -515,7 +516,7 @@ function IntakeFormSession() {
             }
           }}
         />
-        <ScopeWarningBanner />
+        <ScopeWarningBanner strong={!welcome && current.id === "E2"} />
       </header>
 
       {welcome ? (
@@ -752,10 +753,12 @@ function StepP1({
           fieldKey="scopemode" error={errors.scopemode}
         />
         {a.scopemode === "Enclave" ? (
-          <AreaField
+          <TextField
             label="Scope description"
             required
-            hint="What is in the enclave vs out. No CUI content."
+            hint="What is in the enclave vs out. High-level only."
+            notice={CUI_PATH_WARNING}
+            maxLength={CUI_PATH_NOTE_MAX}
             value={a.scopedesc}
             onChange={(v) => patch("scopedesc", v)}
             fieldKey="scopedesc" error={errors.scopedesc}
@@ -1122,7 +1125,9 @@ function StepE2({
           <TextField
             label="Other location"
             required
-            hint="Short write-in. No CUI content."
+            hint="Short write-in. High-level class only."
+            notice={CUI_PATH_WARNING}
+            maxLength={CUI_PATH_NOTE_MAX}
             value={a.cui_locations_note}
             onChange={(v) => patch("cui_locations_note", v)}
             fieldKey="cui_locations_note" error={errors.cui_locations_note}
@@ -1160,7 +1165,9 @@ function StepE2({
                     <TextField
                       label="Marketplace service offering name"
                       required
-                      hint="The Service Offering column, not the company. No CUI. CAP checks Marketplace Provider + Service Offering."
+                      hint="The Service Offering column, not the company. CAP checks Marketplace Provider + Service Offering."
+                      notice={CUI_PATH_WARNING}
+                      maxLength={CUI_PATH_NOTE_MAX}
                       tip={TIPS.offering}
                       value={tag.offering_name || ""}
                       onChange={(v) => {
@@ -1218,7 +1225,9 @@ function StepE2({
             fieldKey="other_sites"
             label="Sites besides HQ"
             required
-            hint="City or site name only. No street addresses of CUI lockups, no CUI."
+            hint="City or site name only. No street addresses of CUI lockups."
+            notice={CUI_PATH_WARNING}
+            maxLength={CUI_PATH_NOTE_MAX}
             value={a.other_sites}
             onChange={(v) => patch("other_sites", v)}
             error={errors.other_sites}
@@ -1290,7 +1299,17 @@ function StepE2({
           fieldKey="env_mode" error={errors.env_mode}
         />
         <RevealSlot open={a.env_mode === "Other named enclave"} className="min-h-[6.75rem]">
-          <TextField label="Named enclave" required hint="Short name only." value={a.enclave_what} onChange={(v) => patch("enclave_what", v)} fieldKey="enclave_what" error={errors.enclave_what} />
+          <TextField
+            label="Named enclave"
+            required
+            hint="Short name only."
+            notice={CUI_PATH_WARNING}
+            maxLength={CUI_PATH_NOTE_MAX}
+            value={a.enclave_what}
+            onChange={(v) => patch("enclave_what", v)}
+            fieldKey="enclave_what"
+            error={errors.enclave_what}
+          />
         </RevealSlot>
         <ChoicePills
           label="CUI boundary defined?"

@@ -1,4 +1,5 @@
 import { beatsForStep } from "./beats.ts";
+import { CUI_PATH_NOTE_KEYS, CUI_PATH_NOTE_MAX } from "./cui-path.ts";
 import {
   BACKUP_CLASSES,
   CISA_SECTORS,
@@ -137,7 +138,7 @@ const STRING_LIMITS: Partial<Record<keyof FormAnswers, number>> = {
   employees: LEN.short,
   hlocage: LEN.cage,
   cageinscope: LEN.cageList,
-  scopedesc: LEN.note,
+  scopedesc: CUI_PATH_NOTE_MAX,
   ao_last: LEN.name,
   ao_first: LEN.name,
   ao_title: LEN.title,
@@ -156,11 +157,11 @@ const STRING_LIMITS: Partial<Record<keyof FormAnswers, number>> = {
   devices_servers: LEN.short,
   devices_mobile: LEN.short,
   devices_home: LEN.short,
-  cui_locations_note: LEN.note,
+  cui_locations_note: CUI_PATH_NOTE_MAX,
   cui_flow: LEN.note,
-  cui_off_hq_note: LEN.note,
-  other_sites: LEN.note,
-  enclave_what: LEN.short,
+  cui_off_hq_note: CUI_PATH_NOTE_MAX,
+  other_sites: CUI_PATH_NOTE_MAX,
+  enclave_what: CUI_PATH_NOTE_MAX,
   count_cui_assets: LEN.short,
   count_spa: LEN.short,
   count_crma: LEN.short,
@@ -315,7 +316,7 @@ function normalizeHostTag(raw: unknown, index: number): { ok: true; value: CuiHo
   }
   const fed = asEnum(raw.fedramp ?? "", HOST_FEDRAMP, `cui_host_fedramp:${index}:fedramp`);
   if (!fed.ok) return fed;
-  const offering = asTrimmedString(raw.offering_name ?? "", LEN.offering, `cui_host_fedramp:${index}:offering_name`);
+  const offering = asTrimmedString(raw.offering_name ?? "", CUI_PATH_NOTE_MAX, `cui_host_fedramp:${index}:offering_name`);
   if (!offering.ok) return offering;
   return {
     ok: true,

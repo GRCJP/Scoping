@@ -38,8 +38,7 @@ export function harborlineOscAnswers(): FormAnswers {
     hlocage: "8H2LP",
     cageinscope: "8H2LP",
     scopemode: "Enclave",
-    scopedesc:
-      "GCC High tenant plus on-prem file share for DoD drawing work. Corporate M365 Commercial is out of scope.",
+    scopedesc: "GCC High plus on-prem file share. Corporate M365 Commercial is out.",
     ao_last: "Chen",
     ao_first: "Maya",
     ao_title: "Contracts manager / Affirming Official",

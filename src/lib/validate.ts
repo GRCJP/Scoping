@@ -1,3 +1,9 @@
+import {
+  CUI_PATH_NOTE_KEYS,
+  CUI_PATH_NOTE_MAX,
+  CUI_PATH_NOTE_TOO_LONG,
+  SCOPING_NOTE_KEYS,
+} from "./cui-path.ts";
 import type { StepId } from "./path";
 import type { FormAnswers, IntakePath } from "./types";
 
@@ -93,6 +99,9 @@ export function validateStep(
     if (inscope) e.cageinscope = inscope;
     need("scopemode", "Select Enterprise or Enclave.");
     if (a.scopemode === "Enclave") need("scopedesc", "Scope description is required for an enclave.");
+    for (const key of SCOPING_NOTE_KEYS) {
+      if (a[key].length > CUI_PATH_NOTE_MAX) e[key] = CUI_PATH_NOTE_TOO_LONG;
+    }
   }
 
   if (step === "P2") {
@@ -160,6 +169,8 @@ export function validateStep(
       } else if (tag.fedramp === "FedRAMP Authorized" && !tag.offering_name.trim()) {
         e.cui_host_fedramp = "Marketplace service offering name for each FedRAMP Authorized host.";
         e[`cui_host_fedramp:${host}:offering`] = "Marketplace service offering name.";
+      } else if (tag.offering_name.length > CUI_PATH_NOTE_MAX) {
+        e[`cui_host_fedramp:${host}:offering`] = CUI_PATH_NOTE_TOO_LONG;
       }
     }
     need("env_mode", "GCC High tenant, PreVeil, other named enclave, broader environment, or N/A?");
@@ -177,6 +188,9 @@ export function validateStep(
     need("physical_cui_observe", "Is there physical CUI we would need to observe?");
     need("virtual_tour_exposes_cui", "Would a site walkthrough put CUI on screen or in the room?");
     need("dlp_blocks_screenshare", "Can we screenshare live system configs without CUI appearing on the call?");
+    for (const key of CUI_PATH_NOTE_KEYS) {
+      if (a[key].length > CUI_PATH_NOTE_MAX) e[key] = CUI_PATH_NOTE_TOO_LONG;
+    }
   }
 
   if (step === "E3") {
