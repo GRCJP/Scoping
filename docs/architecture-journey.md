@@ -123,4 +123,4 @@ The host changed. The contract did not.
 - Submit health (no secret): `https://prescope-submit.example.workers.dev`
 - Intake: `https://prescope-intake.<account>.workers.dev/intake` after `npm run deploy` — see [`intake.md`](cloudflare/intake.md). This repo does not publish a production hostname.
 
-Local UI remains `http://127.0.0.1:43127`.
+Local UI remains `http://localhost:43127`.

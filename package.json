@@ -4,9 +4,9 @@
   "private": true,
   "description": "Scoping · OSC Discovery — white-label C3PAO environment intake. No real Box, no credentials, no CUI.",
   "scripts": {
-    "dev": "next dev --hostname 127.0.0.1 --port 43127",
+    "dev": "next dev --hostname localhost --port 43127",
     "build": "next build",
-    "start": "next start --hostname 127.0.0.1 --port 43127",
+    "start": "next start --hostname localhost --port 43127",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",

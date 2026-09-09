@@ -20,13 +20,13 @@ First build: Power Pages + Dataverse + Automate + Box in Azure / GCC High. Produ
 ## How to run
 
 ```
-git clone https://github.com/GRCJP/Assessment-Scoping.git
-cd Assessment-Scoping
+git clone https://github.com/GRCJP/Scoping.git
+cd Scoping
 npm install
 npm run dev
 ```
 
-Open http://127.0.0.1:43127
+Open http://localhost:43127
 
 `package.json` pins hostname and port on the `dev` and `start` scripts. To verify a production compile, run `npm run build`.
 
