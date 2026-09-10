@@ -35,7 +35,9 @@ EMASS_TEMPLATE_ROOT=
 # Track B live wrangler.toml default is FILL_MODE=container. Override to node
 # for local wrangler dev so Docker / a sidecar is not required.
 FILL_MODE=node
-# To exercise the HTTP sidecar locally:
+# To exercise the HTTP sidecar locally (wrangler-dev only — not production):
 # FILL_MODE=container
 # FILL_CONTAINER_URL=http://127.0.0.1:8788
-# PRESCOPE_SUBMIT_SECRET must match the sidecar. Never commit a trycloudflare hostname.
+# PRESCOPE_SUBMIT_SECRET must match the sidecar. Never commit a sidecar hostname.
+# Production with Containers / PRESCOPE_FILL: leave FILL_CONTAINER_URL empty forever.
+# trycloudflare is local/dev only — do not use it as the production fill path.

@@ -38,7 +38,7 @@ PRESCOPE_SUBMIT_SECRET=dev-only-change-me HOST=127.0.0.1 FILL_CONCURRENCY=1 \
   node --experimental-strip-types workers/prescope-submit/container/server.ts
 ```
 
-Then set Worker `FILL_MODE=container` and `FILL_CONTAINER_URL=http://127.0.0.1:8788`. Same secret as `PRESCOPE_SUBMIT_SECRET`.
+Then set **local** Worker `FILL_MODE=container` and `FILL_CONTAINER_URL=http://127.0.0.1:8788` (`.dev.vars` / `wrangler dev` only). Same secret as `PRESCOPE_SUBMIT_SECRET`. Do not set this URL on the production Worker.
 
 ## Docker (build context = repo root)
 
@@ -50,29 +50,29 @@ docker run --rm -p 8788:8788 \
   prescope-fill
 ```
 
-Point the Worker at `FILL_CONTAINER_URL=http://127.0.0.1:8788`.
+Point **local** `wrangler dev` at `FILL_CONTAINER_URL=http://127.0.0.1:8788`. Production Containers keep that var empty.
 
-## Cloudflare Containers (Admin)
+## Cloudflare Containers (production fill)
 
-Paid Workers **alone** is not enough — exceljs still runs on the isolate and multi-xlsx fill 503s. Use Containers (or this Docker sidecar) for fill. Workers Paid is still useful for orchestrator CPU (Box + JSON).
+**Workers Paid required** (~$5/mo). The free plan cannot bind Containers / `PRESCOPE_FILL`. Paid **alone** is not enough — exceljs still runs on the isolate and multi-xlsx fill 503s. Containers (this image) move fill off the isolate. A local Node sidecar / trycloudflare tunnel is for **local/dev only**, not production. Workers Paid still helps orchestrator CPU (Box + JSON).
 
-1. Uncomment the `[[containers]]` / `PRESCOPE_FILL` / `[[migrations]]` block in `workers/prescope-submit/wrangler.toml`.
+1. Upgrade to Workers Paid. Uncomment the `[[containers]]` / `PRESCOPE_FILL` / `[[migrations]]` block in `workers/prescope-submit/wrangler.toml` (public clones ship it commented — that is OK).
 2. Docker Desktop (or another engine) must be running — `wrangler deploy` builds `container/Dockerfile` with `image_build_context = "../.."` (repo root).
 3. Keep `FILL_CONCURRENCY=1`. Serial Admin smokes only.
-4. Set vars (dashboard or `[vars]`), then redeploy:
+4. Set vars (dashboard or `[vars]`). **`FILL_CONTAINER_URL` stays empty forever** in production — the Worker uses the `PRESCOPE_FILL` binding:
 
 ```
 FILL_MODE=container
-FILL_CONTAINER_URL=          # empty — Worker uses the PRESCOPE_FILL binding
+FILL_CONTAINER_URL=
 FILL_CONCURRENCY=1
 ```
 
 5. Same secret: `npx wrangler secret put PRESCOPE_SUBMIT_SECRET` (already required for `POST /submit`). The Durable Object passes it into the container.
 6. Live Assessment Results: set `BOX_ASSESSMENT_RESULTS_TEMPLATE_FILE_ID`. The Worker downloads those bytes and POSTs them to `/fill`.
-7. Deploy from `workers/prescope-submit`:
+7. Deploy from `workers/prescope-submit` (`--keep-vars` so committed mock/stub `[vars]` do not wipe dashboard Box/mail/fill settings):
 
 ```
-npx wrangler deploy --containers-rollout=immediate
+npx wrangler deploy --keep-vars --containers-rollout=immediate
 ```
 
 `[dev] enable_containers = false` so local `wrangler dev` can override `FILL_MODE=node` in `.dev.vars` without Docker.

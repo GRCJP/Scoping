@@ -30,7 +30,7 @@ Open http://localhost:43127
 
 `package.json` pins hostname and port on the `dev` and `start` scripts. To verify a production compile, run `npm run build`.
 
-**Cloudflare (public intake):** Worker **service name** `prescope-intake` (`wrangler.jsonc` at the repo root) is a deploy identifier — keep it. `npm run deploy` builds with OpenNext and publishes to Workers. Set `PRESCOPE_SUBMIT_WORKER_URL` and `PRESCOPE_SUBMIT_SECRET` as **secrets on that Worker** (not in git). Full steps: [`docs/cloudflare/intake.md`](docs/cloudflare/intake.md). The Box Worker `prescope-submit` is separate (`workers/prescope-submit/`). Those names and `PRESCOPE_*` / `PSC_*` secret keys stay stable so existing `wrangler secret` values keep working. Merging this repo does **not** redeploy production.
+**Cloudflare (public intake):** Worker **service name** `prescope-intake` (`wrangler.jsonc` at the repo root) is a deploy identifier — keep it. `npm run deploy` builds with OpenNext and publishes to Workers (`--keep-vars` so dashboard vars are not wiped). Set `PRESCOPE_SUBMIT_WORKER_URL` and `PRESCOPE_SUBMIT_SECRET` as **secrets on that Worker** (not in git). Full steps: [`docs/cloudflare/intake.md`](docs/cloudflare/intake.md). The Box Worker `prescope-submit` is separate (`workers/prescope-submit/`) — deploy that package with `--keep-vars` too. Those names and `PRESCOPE_*` / `PSC_*` secret keys stay stable so existing `wrangler secret` values keep working. Merging this repo does **not** redeploy production.
 
 Answers live in an in-memory Map on the server process. Restarting the server (or a Workers isolate recycle) clears intakes. Durable drops go through `prescope-submit` → Box.
 

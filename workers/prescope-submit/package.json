@@ -6,7 +6,7 @@
   "description": "Cloudflare Worker: Scoping · OSC Discovery submit / Box orchestration. No secrets in git.",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
+    "deploy": "wrangler deploy --keep-vars",
     "test": "node --experimental-strip-types --import ./test/register-exceljs.mjs --test test/auth.test.ts test/validate.test.ts test/box.test.ts test/submit.test.ts test/mail.test.ts test/fill.test.ts test/container.test.ts",
     "typecheck": "tsc --noEmit"
   },

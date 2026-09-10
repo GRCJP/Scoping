@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start --hostname localhost --port 43127",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy -- --keep-vars",
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
     "prepare-brand": "node --experimental-strip-types scripts/prepare-brand-overlay.ts",
     "attach-brand-assets": "node --experimental-strip-types scripts/attach-brand-assets.ts",

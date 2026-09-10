@@ -30,7 +30,9 @@
   "observability": {
     "enabled": true
   }
-  // Runtime secrets / vars — never commit values. After first deploy:
+  // Runtime secrets / vars — never commit values. Deploy with --keep-vars
+  // (`npm run deploy` already does) so dashboard-managed vars (BRAND, …)
+  // are not wiped by this file (it commits none). After first deploy:
   //   npx wrangler secret put PRESCOPE_SUBMIT_WORKER_URL
   //   npx wrangler secret put PRESCOPE_SUBMIT_SECRET
   // Optional: npx wrangler secret put PSC_ASSESSOR_KEY
