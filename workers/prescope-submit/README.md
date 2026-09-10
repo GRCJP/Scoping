@@ -15,9 +15,12 @@ cp .dev.vars.example .dev.vars
 npx wrangler login
 npx wrangler dev
 npm test
-npx wrangler deploy
+npm run deploy
+# equivalent: npx wrangler deploy --keep-vars
 ```
+
+Always deploy with `--keep-vars` (`npm run deploy` already does). Committed `[vars]` are mock/stub placeholders. A bare `wrangler deploy` wipes live dashboard Box / mail / fill settings.
 
 Do not commit `.dev.vars` or real Box / Resend tokens. CI must keep `BOX_MODE=mock` and `MAIL_PROVIDER=stub`.
 
-Live multi-xlsx 503s: **Containers (or a Node sidecar), not Paid Workers alone.** Committed Track B default is `FILL_MODE=container`. Local `wrangler dev` overrides to `node` via `.dev.vars`. Set `FILL_CONTAINER_URL` in the dashboard or at deploy time — do not commit an ephemeral sidecar hostname, and re-set the URL after a code-only deploy if wrangler.toml blanks it. Empty `FILL_CONTAINER_URL` is correct when `PRESCOPE_FILL` is bound. Same `PRESCOPE_SUBMIT_SECRET`. Steps: [container/README.md](container/README.md) and [docs/cloudflare/README.md](../../docs/cloudflare/README.md).
+Live multi-xlsx 503s: **Containers (or a local Node sidecar), not Paid Workers alone.** Cloudflare Containers / `PRESCOPE_FILL` also require **Workers Paid** (~$5/mo) — the free plan cannot bind Containers. Free/demo: `FILL_MODE=node` on local `wrangler dev`. Production always-on fill = uncomment the Containers block on Paid and leave `FILL_CONTAINER_URL` **empty forever**. Do not use trycloudflare as the production path. Same `PRESCOPE_SUBMIT_SECRET`. Steps: [container/README.md](container/README.md) and [docs/cloudflare/README.md](../../docs/cloudflare/README.md).

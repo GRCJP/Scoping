@@ -20,7 +20,7 @@ Never put secrets in git. Never put `PRESCOPE_SUBMIT_*` in `NEXT_PUBLIC_*` or th
 |--|--------|--------|
 | Worker name | `prescope-intake` | `prescope-submit` |
 | Config | `wrangler.jsonc` (repo root) | `workers/prescope-submit/wrangler.toml` |
-| Command | `npm run deploy` from repo root | `cd workers/prescope-submit && npx wrangler deploy` |
+| Command | `npm run deploy` from repo root (`--keep-vars`) | `cd workers/prescope-submit && npm run deploy` (`wrangler deploy --keep-vars`) |
 | Public URL | `https://prescope-intake.<account>.workers.dev` | `https://prescope-submit.<account>.workers.dev` |
 
 `workers_dev` is on so the first deploy gets a `*.workers.dev` URL. Custom domain is optional (dashboard later).
@@ -63,7 +63,9 @@ npm run preview
    npm run deploy
    ```
 
-   Equivalent: `npx opennextjs-cloudflare build && npx opennextjs-cloudflare deploy`.
+   Equivalent: `npx opennextjs-cloudflare build && npx opennextjs-cloudflare deploy -- --keep-vars`.
+
+   `npm run deploy` always passes `--keep-vars`. Committed intake config has no live Box/mail/fill values; a bare deploy still wipes dashboard-managed runtime vars (`BRAND`, and any other vars you set in the dashboard). Secrets are never deleted by deploy.
 
 3. Note the printed `*.workers.dev` URL. That is the public intake host.
 
@@ -97,7 +99,7 @@ npm run preview
 
    Submit through the form. The Next process still writes the in-memory store, then forwards `{ answers }` to `prescope-submit` when both secrets are set. The OSC thank-you stays public-only (no Box ids).
 
-If you set secrets in the dashboard instead of the CLI, deploy with `--keep-vars` so Wrangler does not wipe dashboard vars: `npx opennextjs-cloudflare deploy -- --keep-vars`.
+Use `--keep-vars` on every intake deploy (`npm run deploy` already does). Wrangler’s default is to replace dashboard vars with whatever is in `wrangler.jsonc` (this repo commits none). That wipes live `BRAND` and any other dashboard-managed settings.
 
 ## Env vars — where they live
 
@@ -155,7 +157,7 @@ npx wrangler secret put BRAND
 # value: acme
 ```
 
-Or dashboard → `prescope-intake` → Settings → Variables and Secrets → `BRAND=acme`. If vars are dashboard-managed, deploy with `--keep-vars`. Do **not** put `BRAND=acme` in committed `wrangler.jsonc`.
+Or dashboard → `prescope-intake` → Settings → Variables and Secrets → `BRAND=acme`. `npm run deploy` already uses `--keep-vars` so a later code deploy does not wipe that dashboard var. Do **not** put `BRAND=acme` in committed `wrangler.jsonc`.
 
 **2a. R2 (preferred — swap the pack without a rebuild)**
 
@@ -204,9 +206,9 @@ Wrangler covers build + deploy + secrets. These stay manual:
 1. **Create / pick the Cloudflare account** and complete `wrangler login`.
 2. **`wrangler secret put`** (or Workers → *prescope-intake* → Settings → Variables and Secrets) for `PRESCOPE_SUBMIT_WORKER_URL` and `PRESCOPE_SUBMIT_SECRET`.
 3. **Custom domain** (optional): Workers & Pages → `prescope-intake` → Settings → Domains & Routes → add a hostname on a zone in the same account. Not required for `*.workers.dev`.
-4. **Workers Builds** (optional CI): connect this GitHub repo, set the deploy command to `npm run deploy` (Path A can add `NEXT_PUBLIC_BRAND_*` as **Build** variables). Use `--keep-vars` if runtime vars are dashboard-managed. CI will **not** include `org-logos/` — Path B from CI needs R2 `BRAND_PACK`.
+4. **Workers Builds** (optional CI): connect this GitHub repo, set the deploy command to `npm run deploy` (already includes `--keep-vars`). Path A can add `NEXT_PUBLIC_BRAND_*` as **Build** variables. CI will **not** include `org-logos/` — Path B from CI needs R2 `BRAND_PACK`.
 5. **R2 incremental cache** (optional): not required for this SSR intake. To add later, create a bucket and follow [OpenNext caching](https://opennext.js.org/cloudflare/caching). Optional **brand** R2 (`BRAND_PACK`) is Path B — see [Company branding on Workers](#company-branding-on-workers).
-6. **Paid Workers** only if the gzip Worker size exceeds the [free plan limit](https://opennext.js.org/cloudflare) (3 MiB gzip). A `wrangler deploy --dry-run` of this app is about **7.1 MiB / 1.4 MiB gzip** (under the free limit). Re-check the `Total Upload` line if dependencies grow.
+6. **Paid Workers** for this intake Worker only if the gzip size exceeds the [free plan limit](https://opennext.js.org/cloudflare) (3 MiB gzip). A `wrangler deploy --dry-run` of this app is about **7.1 MiB / 1.4 MiB gzip** (under the free limit). Re-check the `Total Upload` line if dependencies grow. **Cloudflare Containers / `PRESCOPE_FILL` on `prescope-submit` are a separate Paid requirement** (~$5/mo) — see [`README.md`](README.md) § exceljs / Containers. The free plan cannot bind Containers. Paid alone does not fix exceljs 503s.
 
 Do **not** turn off Power Automate F1–F2b from this deploy. Cutover is a separate, explicit step (`docs/cloudflare/README.md` § Cutover).
 

@@ -37,9 +37,9 @@ Never put secrets in git. Never call live Box from CI.
 ## Create the Cloudflare account (manual)
 
 1. Open [dash.cloudflare.com](https://dash.cloudflare.com/sign-up) and create an account (or use an existing sandbox).
-2. Workers are available on the free plan for this scaffold. **Paid Workers alone does not fix multi-xlsx 503s** — move exceljs to a Container (or Node sidecar). Paid still helps orchestrator CPU. See [exceljs / Containers](#exceljs-and-cloudflare-containers).
+2. The intake Worker and this submit orchestrator run on the **free** Workers plan. **Cloudflare Containers / `PRESCOPE_FILL` require Workers Paid** (~$5/mo). The free plan cannot bind Containers. Paid alone does **not** fix multi-xlsx 503s — Containers (or a local Node sidecar) move exceljs off the isolate. Paid still helps orchestrator CPU. Free/demo: `FILL_MODE=node` locally. Production always-on fill = Containers on Paid. See [exceljs / Containers](#exceljs-and-cloudflare-containers).
 3. Develop and prove the flow in **this sandbox account**.
-4. Later, log into the **owner** account (`wrangler logout` / `wrangler login`), set the same secrets there, and `wrangler deploy` again. Do not copy production Box tokens into the sandbox.
+4. Later, log into the **owner** account (`wrangler logout` / `wrangler login`), set the same secrets there, and `npm run deploy` (or `wrangler deploy --keep-vars`) again. Do not copy production Box tokens into the sandbox.
 
 Account creation cannot be automated from this repo.
 
@@ -116,7 +116,7 @@ Admin retries may send `Idempotency-Key` and/or `{ "answers", "drop": { "folderI
 | `MAIL_PROVIDER` | `stub` (default, CI/tests) or `resend` |
 | `MAIL_CUSTOMER_TEMPLATE_ID` | Published Resend template **alias or UUID** for `customer_confirmation` only. Default `intake-submission-confirmation`. Not a secret. `internal_box_link` stays plain text. |
 | `EMASS_TEMPLATE_ROOT` | Local repo root for `wrangler dev` filesystem templates |
-| `FILL_CONTAINER_URL` | HTTP sidecar origin when `FILL_MODE=container` and `PRESCOPE_FILL` is **not** bound. Stay empty in git (never commit a trycloudflare hostname). Admin sets it in the dashboard or `wrangler deploy --var FILL_CONTAINER_URL:…`. A code-only deploy can blank a dashboard URL — re-set it if empty. Leave empty when the Containers Durable Object is bound. |
+| `FILL_CONTAINER_URL` | HTTP sidecar origin when `FILL_MODE=container` and `PRESCOPE_FILL` is **not** bound. **Production with Containers / `PRESCOPE_FILL`: stay empty forever.** Localhost (or a temporary trycloudflare tunnel) is for local/dev only — do not use trycloudflare as the production fill path. Stay empty in git. |
 | `FILL_CONCURRENCY` | `1` (default) · `2` · `3`. Workbooks filled at once. Keep `1` so a single submit does not spike Worker CPU. |
 
 ### Secrets (`wrangler secret put` / `.dev.vars` — never commit)
@@ -152,11 +152,13 @@ Box folder ids can stay in `[vars]` (they are not credentials). Rotate the submi
 2. Authorization: enterprise, with scopes **Read and write all files and folders** stored in Box (least privilege later: a collaboration on the Scoping parent only).
 3. Authorize the app as the enterprise admin.
 4. Invite the app’s service account as **Co-owner** (or Editor) on the Scoping parent / `OSC Discovery Drops` only. Never on an existing CMMC assessment / CUI library.
-5. Paste folder ids into `[vars]`. Upload the **blank** UNCLASSIFIED templates into the TEMPLATE folder (or set the file ids): Pre-Assessment, Required-Data-OSC, and the official Box `CMMC_Level2_AssessmentResults_Template` (v3.9; `.xlsx` suffix optional). **Do not** upload the test fixture / Cover stub as that file. **Cloudflare Admin (live):** set `BOX_TEMPLATE_FOLDER_ID` and `BOX_ASSESSMENT_RESULTS_TEMPLATE_FILE_ID` to your Box folder/file ids (never commit live ids), then redeploy `prescope-submit`. Confirm the file’s tabs are Assessment, Requirements, Requirement Objectives, Example, OSC SSP(s), Instructions, Glossary, Version History, Lookup Values — not Cover. The official CAC blank is not committed. Live `FILL_MODE=container` POSTs those bytes into `/fill` (`assessmentResultsFromBytesOnly`). Missing or stub-shaped bytes skip Assessment Results. Mock/dev may still use `allowAssessmentResultsStub`.
+5. Paste folder ids into the dashboard (preferred) or `[vars]`. Upload the **blank** UNCLASSIFIED templates into the TEMPLATE folder (or set the file ids): Pre-Assessment, Required-Data-OSC, and the official Box `CMMC_Level2_AssessmentResults_Template` (v3.9; `.xlsx` suffix optional). **Do not** upload the test fixture / Cover stub as that file. **Cloudflare Admin (live):** set `BOX_TEMPLATE_FOLDER_ID` and `BOX_ASSESSMENT_RESULTS_TEMPLATE_FILE_ID` to your Box folder/file ids (never commit live ids), then `npm run deploy` from `workers/prescope-submit` (`--keep-vars`). Confirm the file’s tabs are Assessment, Requirements, Requirement Objectives, Example, OSC SSP(s), Instructions, Glossary, Version History, Lookup Values — not Cover. The official CAC blank is not committed. Live `FILL_MODE=container` POSTs those bytes into `/fill` (`assessmentResultsFromBytesOnly`). Missing or stub-shaped bytes skip Assessment Results. Mock/dev may still use `allowAssessmentResultsStub`.
 
 JWT/service-account apps are documented via the reserved `BOX_JWT_*` secrets. This slice implements **CCG only**. Prefer CCG unless the owner already has a JWT app.
 
 ## Deploy
+
+Always use **`--keep-vars`**. Committed `[vars]` are mock/stub placeholders (`BOX_MODE=mock`, `MAIL_PROVIDER=stub`, empty Box folder ids, empty `FILL_CONTAINER_URL`). A bare `wrangler deploy` replaces dashboard Box / mail / fill settings with those empties and wipes a live account. `npm run deploy` in `workers/prescope-submit` already passes `--keep-vars`. Secrets are never deleted by deploy.
 
 Live Cloudflare **free** sandboxes can be blocked at account creation (email verify / Trust & Safety). Until an **owner** Cloudflare account (or another host) is available, keep Power Automate **F1–F2b** live. The prove path is local `wrangler dev` + `BOX_MODE=mock` — do not wait on a personal free-tier deploy.
 
@@ -164,15 +166,16 @@ Sandbox first (when the account can run Workers):
 
 ```
 cd workers/prescope-submit
-npx wrangler deploy
+npm run deploy
+# equivalent: npx wrangler deploy --keep-vars
 ```
 
 Promote to the owner account later:
 
 1. `npx wrangler logout` then `npx wrangler login` as the owner.
-2. Recreate `[vars]` (`wrangler.toml` or dashboard) with **that** account’s Box folder ids.
+2. Recreate `[vars]` (dashboard preferred) with **that** account’s Box folder ids. Do not commit live ids.
 3. `wrangler secret put` each secret again (secrets do not copy between accounts).
-4. `npx wrangler deploy`.
+4. `npm run deploy` (or `npx wrangler deploy --keep-vars`).
 5. Point the **intake host** at the new Worker URL. Production: `wrangler secret put PRESCOPE_SUBMIT_WORKER_URL` and `wrangler secret put PRESCOPE_SUBMIT_SECRET` on **`prescope-intake`** ([intake.md](intake.md)). Local `next dev` still uses `.env.local`. Do **not** put those values in the Next.js client / `NEXT_PUBLIC_*`.
 
 ## Next.js wire (optional)
@@ -288,16 +291,18 @@ Public Next `POST /api/submit` still sends `{ answers }` only. Resume / keys are
 
 Live Box never ships the mapping stub. If the official v3.9 blank is missing or the bytes look like Cover / Assessment Information / Record of Assessment, the Worker skips that upload and records `assessmentResultsSkipped`. The Worker also refuses Cover-shaped *filled* sidecar output (stale Assessment-Scoping-redeploy images that still call `createAssessmentResultsStubWorkbook` when they ignore POSTed Box bytes).
 
-**Why live 503s:** filling three workbooks with exceljs is CPU-heavy. Cloudflare resource-limits the Worker isolate. **Workers Paid alone is not the fix** — it buys more orchestrator CPU (auth, Box, JSON) but exceljs still runs on the request path. The architecture fix is `FILL_MODE=container`: Worker accepts submit → `POST /fill` (auth) on a Node sidecar / Cloudflare Container that calls the same `fillEmassXlsxPack` → then Box drop (fill-first, from #44). Keep `FILL_CONCURRENCY=1` and serial Admin smokes.
+**Why live 503s:** filling three workbooks with exceljs is CPU-heavy. Cloudflare resource-limits the Worker isolate. **Workers Paid alone is not the fix** — it buys more orchestrator CPU (auth, Box, JSON) but exceljs still runs on the request path. The architecture fix is `FILL_MODE=container`: Worker accepts submit → `POST /fill` (auth) on a Cloudflare Container (or a **local** Node sidecar) that calls the same `fillEmassXlsxPack` → then Box drop (fill-first). Keep `FILL_CONCURRENCY=1` and serial Admin smokes.
 
-### Admin: live container fill
+**Workers Paid is required to bind Containers.** Cloudflare Containers / `PRESCOPE_FILL` need the Paid plan (~$5/mo). The free plan cannot bind Containers. Free/demo can keep `FILL_MODE=node` on local `wrangler dev`. Production always-on fill = uncomment the Containers block on Paid and leave `FILL_CONTAINER_URL` empty.
 
-Committed `FILL_MODE=container`. Same `PRESCOPE_SUBMIT_SECRET` on Worker and sidecar. Never commit secrets. Do not commit `FILL_CONTAINER_URL` (ephemeral trycloudflare). After a code-only `wrangler deploy`, confirm the dashboard URL is still set — `[vars] FILL_CONTAINER_URL=""` can blank it. Prefer `npx wrangler deploy --var FILL_CONTAINER_URL:https://<sidecar-origin>`.
+### Admin: production fill (Containers)
 
-**A — Cloudflare Containers (preferred in the owner account)**
+Committed `FILL_MODE=container`. Same `PRESCOPE_SUBMIT_SECRET` on Worker and fill process. Never commit secrets.
 
-1. Docker engine running on the deploy machine.
-2. In `workers/prescope-submit/wrangler.toml`, uncomment `[[containers]]` (`class_name = "PrescopeFill"`, `image = "./container/Dockerfile"`, `image_build_context = "../.."`), the `PRESCOPE_FILL` Durable Object binding, and the `v1-prescope-fill` migration.
+**Production path — Cloudflare Containers on Workers Paid.** `FILL_CONTAINER_URL` must stay **empty forever** once `PRESCOPE_FILL` is bound. Do **not** point production at trycloudflare or any ephemeral sidecar hostname.
+
+1. Upgrade the account to **Workers Paid**. Docker engine running on the deploy machine.
+2. In `workers/prescope-submit/wrangler.toml`, uncomment `[[containers]]` (`class_name = "PrescopeFill"`, `image = "./container/Dockerfile"`, `image_build_context = "../.."`), the `PRESCOPE_FILL` Durable Object binding, and the `v1-prescope-fill` migration. Public clones ship that block commented — that is OK until Paid is on.
 3. Dashboard / `[vars]`:
 
 ```
@@ -311,12 +316,14 @@ Leave `FILL_CONTAINER_URL` empty — the Worker uses `env.PRESCOPE_FILL`. `npx w
 4. From `workers/prescope-submit`:
 
 ```
-npx wrangler deploy --containers-rollout=immediate
+npx wrangler deploy --keep-vars --containers-rollout=immediate
 ```
 
 `[dev] enable_containers = false` so local `wrangler dev` can override `FILL_MODE=node` in `.dev.vars` without Docker.
 
-**B — HTTP Node sidecar (equivalent; any enclave host)**
+### Local / dev sidecar only
+
+A Node sidecar (Docker on localhost, or `node … container/server.ts`) is for **local proof**. A trycloudflare tunnel is also local/dev only — never the production fill path.
 
 ```
 # repo root
@@ -324,9 +331,9 @@ docker build -f workers/prescope-submit/container/Dockerfile -t prescope-fill .
 docker run --rm -p 8788:8788 -e PRESCOPE_SUBMIT_SECRET="$SECRET" -e FILL_CONCURRENCY=1 prescope-fill
 ```
 
-Then set `FILL_MODE=container` and `FILL_CONTAINER_URL=https://<sidecar-origin>` (no trailing `/fill`). The Worker sends `Authorization: Bearer <PRESCOPE_SUBMIT_SECRET>`.
+Local `wrangler dev` / `.dev.vars`: `FILL_MODE=container` and `FILL_CONTAINER_URL=http://127.0.0.1:8788` (no trailing `/fill`). The Worker sends `Authorization: Bearer <PRESCOPE_SUBMIT_SECRET>`.
 
-Local without Docker: `PRESCOPE_SUBMIT_SECRET=… HOST=127.0.0.1 node --experimental-strip-types workers/prescope-submit/container/server.ts` and `FILL_CONTAINER_URL=http://127.0.0.1:8788`.
+Without Docker: `PRESCOPE_SUBMIT_SECRET=… HOST=127.0.0.1 node --experimental-strip-types workers/prescope-submit/container/server.ts` and the same localhost URL. Do not commit that URL. Do not set it on the production Worker.
 
 Protocol and image notes: `workers/prescope-submit/container/README.md`.
 

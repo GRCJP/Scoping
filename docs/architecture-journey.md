@@ -82,7 +82,7 @@ OSC browser  →  prescope-intake   (Next.js /intake on Workers via OpenNext)
 
 | Piece | Role |
 |-------|------|
-| Worker service name `prescope-intake` | Public form. Repo-root `wrangler.jsonc`. `npm run deploy`. Thank-you stays public-only (no Box ids, fill details, or Worker errors). |
+| Worker service name `prescope-intake` | Public form. Repo-root `wrangler.jsonc`. `npm run deploy` (`--keep-vars`). Thank-you stays public-only (no Box ids, fill details, or Worker errors). |
 | Worker service name `prescope-submit` | Trusted `POST /submit`. Shared secret. Fills eMASS first (`FILL_MODE=container` Track B live default; local `.dev.vars` may use `node`), then Box CCG drop + upload. Not called from the browser. Serial Admin smokes only (`Idempotency-Key` / `drop.folderId` on retry). |
 | Box dump | Readable `{Org} - OSC Discovery Answers - {Day}.json` plus filled `CUI-Pre-Assessment-*.xlsx` and `CUI-Required-Data-OSC-*.xlsx`. Filled workbooks land in `00 Internal` only. Never emailed. |
 | Mock Box | Committed default `BOX_MODE=mock`. No `api.box.com` until the company authorizes a CCG app and switches to `live`. |

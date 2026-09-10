@@ -2,6 +2,10 @@
 # Placeholders only — never put secrets here.
 # Secrets: wrangler secret put …  or copy .dev.vars.example → .dev.vars (gitignored).
 #
+# Always deploy with --keep-vars (`npm run deploy` in this package already does).
+# Committed [vars] are mock/stub placeholders. A bare `wrangler deploy` replaces
+# dashboard Box / mail / fill settings with these empties and wipes live config.
+#
 # compatibility_date ≥ 2026-08-04 enables Node.js compat by default (Buffer, streams)
 # so exceljs can fill workbooks when FILL_MODE=node. See docs/cloudflare/README.md.
 
@@ -49,14 +53,10 @@ MAIL_PROVIDER = "stub"
 MAIL_CUSTOMER_TEMPLATE_ID = "intake-submission-confirmation"
 # Repo root for local wrangler dev filesystem templates. Empty in production (use Box).
 EMASS_TEMPLATE_ROOT = ""
-# HTTP sidecar origin when FILL_MODE=container and PRESCOPE_FILL is not bound.
-# Stay empty in git — never commit a trycloudflare / ephemeral hostname.
-# Admin sets FILL_CONTAINER_URL in the Cloudflare dashboard or at deploy time.
-# wrangler deploy applies [vars] as written; an empty string here can blank a
-# dashboard URL. Prefer keeping the live URL:
-#   npx wrangler deploy --var FILL_CONTAINER_URL:https://<sidecar-origin>
-# or re-set FILL_CONTAINER_URL in the dashboard after a code-only deploy if it
-# is empty. Leave empty when the PRESCOPE_FILL Durable Object is bound.
+# HTTP sidecar origin — local / wrangler-dev only (localhost or a temporary
+# trycloudflare tunnel). Production with Containers / PRESCOPE_FILL: leave
+# this empty forever. Do not use trycloudflare as the production fill path.
+# Stay empty in git — never commit a sidecar hostname.
 FILL_CONTAINER_URL = ""
 # Workbooks filled at once (1–3). Default 1 so one submit does not spike CPU (Worker 503).
 # Do not run parallel Admin smokes even at 1 — serial submits only.
@@ -80,9 +80,11 @@ FILL_CONCURRENCY = "1"
 enable_containers = false
 
 # --- Admin: FILL_MODE=container (uncomment this whole block, then wrangler deploy) ---
-# Docker must be running. Build context is the repo root (src/lib + docs/emass).
-# Paid Workers alone does not move exceljs off the isolate — Containers (or a
-# Node sidecar) is the architecture fix. Paid still helps the orchestrator CPU.
+# Cloudflare Containers / PRESCOPE_FILL require Workers Paid (~$5/mo). The free
+# plan cannot bind Containers. Paid alone does not move exceljs off the isolate —
+# Containers (or a local Node sidecar) is the architecture fix. Paid still helps
+# orchestrator CPU. Docker must be running. Build context is the repo root
+# (src/lib + docs/emass).
 #
 # Durable Object class/binding names below are deploy identifiers — keep as-is.
 # [[containers]]
@@ -100,9 +102,11 @@ enable_containers = false
 # tag = "v1-prescope-fill"
 # new_sqlite_classes = [ "PrescopeFill" ]
 #
-# [vars] already commits FILL_MODE=container. Keep FILL_CONTAINER_URL empty when
-# the binding is used (sidecar URL only if no DO). FILL_CONCURRENCY stays "1".
-# Do not put a trycloudflare hostname in this file.
+# [vars] already commits FILL_MODE=container. Production: keep FILL_CONTAINER_URL
+# empty forever when this binding is used. A local Node sidecar / trycloudflare
+# URL is for wrangler-dev only — not the production path. FILL_CONCURRENCY "1".
+# Deploy: npm run deploy  (wrangler deploy --keep-vars). After uncommenting this
+# block, add --containers-rollout=immediate so the image rolls out in one step.
 # Same secret as the Worker: wrangler secret put PRESCOPE_SUBMIT_SECRET
 # Official Assessment Results blank: set BOX_ASSESSMENT_RESULTS_TEMPLATE_FILE_ID
 # (Worker downloads bytes and POSTs them to /fill — do not invent a second map).
